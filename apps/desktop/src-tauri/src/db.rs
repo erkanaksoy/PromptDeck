@@ -93,6 +93,7 @@ impl Database {
                     .pointer("/payload/conversations")
                     .and_then(Value::as_array)
                     .context("snapshot conversations missing")?;
+                transaction.execute("DELETE FROM conversations", [])?;
                 for item in conversations {
                     Self::upsert_conversation(&transaction, item)?;
                 }
@@ -270,6 +271,36 @@ mod tests {
             })
             .unwrap();
         assert_eq!(version, SCHEMA_VERSION);
+    }
+
+    #[test]
+    fn replaces_conversations_with_each_authoritative_snapshot() {
+        let directory = tempfile::tempdir().unwrap();
+        let database = Database::open(&directory.path().join("promptdeck.db")).unwrap();
+        let snapshot = |message_id: &str, key: &str| {
+            json!({
+                "messageId": message_id,
+                "type": "FULL_STATE_SNAPSHOT",
+                "payload": {
+                    "settings": {},
+                    "conversations": [{
+                        "key": key,
+                        "platform": "claude",
+                        "canonicalUrl": format!("https://claude.ai/chat/{key}"),
+                        "lastActivityAt": 100
+                    }]
+                }
+            })
+        };
+        database
+            .apply_message(&snapshot("snapshot-one", "one"))
+            .unwrap();
+        database
+            .apply_message(&snapshot("snapshot-two", "two"))
+            .unwrap();
+        let conversations = database.conversations().unwrap();
+        assert_eq!(conversations.len(), 1);
+        assert_eq!(conversations[0]["key"], "two");
     }
 
     #[test]

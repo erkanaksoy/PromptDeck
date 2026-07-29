@@ -95,6 +95,24 @@ describe("desktop protocol", () => {
     expect(incremental.size).toBe(1);
   });
 
+  it("removes records omitted from an authoritative snapshot", () => {
+    const active = conversation();
+    const staleRecent = conversation({
+      key: "claude:stale",
+      platform: "claude",
+      canonicalUrl: "https://claude.ai/chat/stale",
+      openTabIds: [],
+      windowIds: [],
+      closedAt: Date.now()
+    });
+    const snapshot = reconcileSnapshot(
+      new Map([[active.key, active], [staleRecent.key, staleRecent]]),
+      [active]
+    );
+    expect(snapshot.has(active.key)).toBe(true);
+    expect(snapshot.has(staleRecent.key)).toBe(false);
+  });
+
   it("uses deterministic last-write-wins metadata for shared fields", () => {
     const existing = conversation({
       labelIds: ["work"],

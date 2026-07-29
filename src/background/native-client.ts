@@ -97,7 +97,10 @@ export class NativeMessagingClient {
         capabilities: ["snapshot", "incremental", "focus", "labels", "read-state", "manual-override"]
       });
       void this.flushSnapshot();
-      this.heartbeatTimer = setInterval(() => this.send("HEARTBEAT", {}), 25_000);
+      this.heartbeatTimer = setInterval(() => {
+        this.send("HEARTBEAT", {});
+        void this.sendSnapshot();
+      }, 25_000);
     } catch (error) {
       this.handleDisconnect(error instanceof Error ? error.message : "Native host unavailable");
     }

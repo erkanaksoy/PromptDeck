@@ -38,6 +38,7 @@ function fakePort(posted: unknown[]): chrome.runtime.Port {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -69,5 +70,33 @@ describe("native messaging client", () => {
         message.payload?.conversations?.some((item) => item.key === "claude:new")
       )).toBe(true);
     });
+  });
+
+  it("sends a reconciliation snapshot with the 25-second heartbeat", async () => {
+    vi.useFakeTimers();
+    const posted: Array<{ type?: string; payload?: { conversations?: ConversationRecord[] } }> = [];
+    const state: DashboardState = {
+      conversations: [],
+      settings: {} as DashboardState["settings"],
+      windowLabels: {}
+    };
+    vi.stubGlobal("chrome", {
+      runtime: {
+        connectNative: () => fakePort(posted),
+        getManifest: () => ({ version: "1.0.2" })
+      }
+    });
+    const client = new NativeMessagingClient(async () => state, async () => undefined);
+    client.start(true);
+    await vi.advanceTimersByTimeAsync(0);
+
+    state.conversations = [conversation()];
+    await vi.advanceTimersByTimeAsync(25_000);
+
+    expect(posted.some((message) =>
+      message.type === "FULL_STATE_SNAPSHOT" &&
+      message.payload?.conversations?.some((item) => item.key === "claude:new")
+    )).toBe(true);
+    client.setEnabled(false);
   });
 });

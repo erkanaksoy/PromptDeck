@@ -180,9 +180,6 @@ export function reconcileSnapshot(
     }
     next.set(conversation.key, mergeConversation(existing, conversation));
   }
-  for (const [key, existing] of current) {
-    if (!next.has(key) && existing.closedAt) next.set(key, existing);
-  }
   return next;
 }
 
