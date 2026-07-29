@@ -1,13 +1,15 @@
 use crate::db::Database;
 use crate::protocol::{read_frame, validate_message, write_frame};
 use parking_lot::Mutex;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::sync::Arc;
+use std::time::Duration;
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_notification::NotificationExt;
 use tokio::sync::mpsc;
 
 pub const PIPE_NAME: &str = r"\\.\pipe\PromptDeckDesktop-v1";
+const RECONCILIATION_INTERVAL: Duration = Duration::from_secs(15);
 
 #[derive(Default)]
 pub struct BridgeChannel {
@@ -49,6 +51,9 @@ pub async fn run(app: AppHandle, database: Arc<Database>, channel: Arc<BridgeCha
         let (mut reader, mut writer) = tokio::io::split(server);
         let (sender, mut receiver) = mpsc::unbounded_channel::<Vec<u8>>();
         *channel.sender.lock() = Some(sender);
+        let mut reconciliation = tokio::time::interval(RECONCILIATION_INTERVAL);
+        reconciliation.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+        reconciliation.tick().await;
         loop {
             tokio::select! {
                 received = read_frame(&mut reader) => {
@@ -85,12 +90,31 @@ pub async fn run(app: AppHandle, database: Arc<Database>, channel: Arc<BridgeCha
                         None => break,
                     }
                 }
+                _ = reconciliation.tick() => {
+                    let body = serde_json::to_vec(&reconciliation_request())
+                        .expect("serialize reconciliation request");
+                    if let Err(error) = write_frame(&mut writer, &body).await {
+                        log::warn!("native bridge reconciliation request failed: {error}");
+                        break;
+                    }
+                }
             }
         }
         *channel.sender.lock() = None;
         let _ = database.record_connection("extension_not_connected", None);
         let _ = app.emit("bridge-disconnected", ());
     }
+}
+
+fn reconciliation_request() -> Value {
+    json!({
+        "protocolVersion": 1,
+        "messageId": uuid::Uuid::new_v4().to_string(),
+        "sentAt": chrono::Utc::now().timestamp_millis(),
+        "source": "desktop",
+        "type": "REQUEST_FULL_STATE",
+        "payload": {}
+    })
 }
 
 fn maybe_notify(app: &AppHandle, database: &Database, message: &Value) {
@@ -138,3 +162,16 @@ fn maybe_notify(app: &AppHandle, database: &Database, message: &Value) {
 
 #[cfg(not(windows))]
 pub async fn run(_app: AppHandle, _database: Arc<Database>, _channel: Arc<BridgeChannel>) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn creates_a_valid_periodic_reconciliation_request() {
+        let request = reconciliation_request();
+        validate_message(&request).unwrap();
+        assert_eq!(request["type"], "REQUEST_FULL_STATE");
+        assert_eq!(request["source"], "desktop");
+    }
+}

@@ -9,7 +9,9 @@ protocol frames to stdout. Diagnostics use stderr and local logs.
 The host forwards the same frames through `\\.\pipe\PromptDeckDesktop-v1`. The pipe is local to
 Windows and is created by the desktop backend; there is no network endpoint. Chrome disconnect
 closes the host. The extension reconnects with jittered exponential backoff from 1 second to 60
-seconds and requests/replays a full snapshot after reconnection.
+seconds and requests/replays a full snapshot after reconnection. Incremental changes are sent
+immediately. As a recovery path independent of Manifest V3 service-worker timers, the always-running
+desktop backend also requests an authoritative full snapshot every 15 seconds.
 
 ## Development registration
 
