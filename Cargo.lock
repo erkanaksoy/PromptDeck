@@ -2696,7 +2696,7 @@ dependencies = [
 
 [[package]]
 name = "promptdeck-desktop"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2719,7 +2719,7 @@ dependencies = [
 
 [[package]]
 name = "promptdeck-native-host"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "serde_json",
 ]

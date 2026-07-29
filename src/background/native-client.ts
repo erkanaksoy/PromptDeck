@@ -28,6 +28,8 @@ export class NativeMessagingClient {
   private heartbeatTimer?: ReturnType<typeof setInterval>;
   private enabled = true;
   private intentionalDisconnect = false;
+  private snapshotPending = true;
+  private snapshotInFlight?: Promise<void>;
   private readonly backoff = new ReconnectBackoff();
   private readonly received = new MessageLedger();
   private status: NativeClientStatus = { state: "extension_not_connected" };
@@ -54,24 +56,25 @@ export class NativeMessagingClient {
   }
 
   public send<K extends ProtocolMessageType>(type: K, payload: ProtocolPayloads[K]): boolean {
-    if (!this.port) return false;
+    if (!this.port) {
+      if (type === "CONVERSATION_UPSERT" || type === "CONVERSATION_REMOVE" || type === "SETTINGS_UPDATE") {
+        this.snapshotPending = true;
+      }
+      return false;
+    }
     try {
       this.port.postMessage(createEnvelope(type, "extension", payload));
       return true;
     } catch {
+      this.snapshotPending = true;
       this.handleDisconnect("Native host send failed");
       return false;
     }
   }
 
   public async sendSnapshot(): Promise<void> {
-    if (!this.port) return;
-    const snapshot = await this.getSnapshot();
-    this.send("FULL_STATE_SNAPSHOT", {
-      conversations: snapshot.conversations,
-      settings: snapshot.settings,
-      snapshotAt: Date.now()
-    });
+    this.snapshotPending = true;
+    await this.flushSnapshot();
   }
 
   private connect(): void {
@@ -88,11 +91,12 @@ export class NativeMessagingClient {
       });
       this.backoff.reset();
       this.status = { state: "connected", lastConnectedAt: Date.now() };
+      this.snapshotPending = true;
       this.send("HELLO_EXTENSION", {
         extensionVersion: chrome.runtime.getManifest().version,
         capabilities: ["snapshot", "incremental", "focus", "labels", "read-state", "manual-override"]
       });
-      void this.sendSnapshot();
+      void this.flushSnapshot();
       this.heartbeatTimer = setInterval(() => this.send("HEARTBEAT", {}), 25_000);
     } catch (error) {
       this.handleDisconnect(error instanceof Error ? error.message : "Native host unavailable");
@@ -111,6 +115,7 @@ export class NativeMessagingClient {
   private handleDisconnect(error: string): void {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.port = undefined;
+    this.snapshotPending = true;
     if (!this.enabled || this.intentionalDisconnect) return;
     const delay = this.backoff.nextDelay();
     this.status = {
@@ -120,6 +125,38 @@ export class NativeMessagingClient {
       retryAt: Date.now() + delay
     };
     this.reconnectTimer = setTimeout(() => this.connect(), delay);
+  }
+
+  private async flushSnapshot(): Promise<void> {
+    if (!this.port) return;
+    if (this.snapshotInFlight) {
+      await this.snapshotInFlight;
+      return;
+    }
+    this.snapshotInFlight = (async () => {
+      while (this.port && this.snapshotPending) {
+        this.snapshotPending = false;
+        const snapshot = await this.getSnapshot();
+        if (!this.port) {
+          this.snapshotPending = true;
+          break;
+        }
+        if (!this.send("FULL_STATE_SNAPSHOT", {
+          conversations: snapshot.conversations,
+          settings: snapshot.settings,
+          snapshotAt: Date.now()
+        })) {
+          this.snapshotPending = true;
+          break;
+        }
+      }
+    })();
+    try {
+      await this.snapshotInFlight;
+    } finally {
+      this.snapshotInFlight = undefined;
+      if (this.port && this.snapshotPending) void this.flushSnapshot();
+    }
   }
 
   private async onMessage(value: unknown): Promise<void> {

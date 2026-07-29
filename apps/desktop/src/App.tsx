@@ -191,15 +191,10 @@ export function App() {
   const [labelTarget, setLabelTarget] = useState<ConversationRecord>();
 
   useEffect(() => {
-    void bridge.getSnapshot().then((snapshot) => {
-      setConversations(new Map(snapshot.conversations.map((item) => [item.key, item])));
-      setConnection(snapshot.connectionState);
-      setLastSyncAt(snapshot.lastSyncAt);
-      setStale(snapshot.stale);
-      setPreferences({ ...DEFAULT_DESKTOP_PREFERENCES, ...snapshot.preferences });
-    });
+    let disposed = false;
     let unlisten: (() => void) | undefined;
-    void bridge.listen((message) => {
+    const handleMessage = (message: Parameters<Parameters<typeof bridge.listen>[0]>[0]) => {
+      if (disposed) return;
       if (message.type === "FULL_STATE_SNAPSHOT") {
         setConversations((current) => reconcileSnapshot(current, message.payload.conversations));
         setConnection("connected"); setStale(false); setLastSyncAt(Date.now());
@@ -214,8 +209,24 @@ export function App() {
       else if (message.type === "ERROR_RESPONSE" && message.payload.code === "DISCONNECTED") {
         setConnection("extension_not_connected"); setStale(true);
       }
-    }).then((dispose) => { unlisten = dispose; });
-    return () => unlisten?.();
+    };
+    void (async () => {
+      unlisten = await bridge.listen(handleMessage);
+      const snapshot = await bridge.getSnapshot();
+      if (disposed) {
+        unlisten();
+        return;
+      }
+      setConversations((current) => reconcileSnapshot(current, snapshot.conversations));
+      setConnection(snapshot.connectionState);
+      setLastSyncAt(snapshot.lastSyncAt);
+      setStale(snapshot.stale);
+      setPreferences({ ...DEFAULT_DESKTOP_PREFERENCES, ...snapshot.preferences });
+    })();
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   }, []);
 
   useEffect(() => {

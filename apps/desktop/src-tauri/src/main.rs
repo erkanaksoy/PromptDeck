@@ -68,6 +68,7 @@ fn get_cached_state(state: State<'_, AppState>) -> Result<Value, String> {
         .database
         .conversations()
         .map_err(|error| error.to_string())?;
+    let connected = state.bridge.is_connected();
     let preferences = state
         .database
         .get_setting("desktop_preferences")
@@ -77,9 +78,9 @@ fn get_cached_state(state: State<'_, AppState>) -> Result<Value, String> {
         });
     Ok(json!({
         "conversations": conversations,
-        "connectionState": if state.bridge.is_connected() { "connected" } else { "extension_not_connected" },
+        "connectionState": if connected { "connected" } else { "extension_not_connected" },
         "lastSyncAt": Value::Null,
-        "stale": true,
+        "stale": !connected,
         "preferences": preferences,
         "databasePath": state.database.path()
     }))
