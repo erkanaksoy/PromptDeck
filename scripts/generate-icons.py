@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 ICON_DIR = ROOT / "public" / "icons"
+DESKTOP_ICON_DIR = ROOT / "apps" / "desktop" / "src-tauri" / "icons"
 
 
 def render(size: int) -> None:
@@ -28,3 +29,12 @@ def render(size: int) -> None:
 
 for icon_size in (16, 32, 48, 128):
     render(icon_size)
+
+DESKTOP_ICON_DIR.mkdir(parents=True, exist_ok=True)
+desktop_source = Image.open(ICON_DIR / "icon-128.png").convert("RGBA")
+desktop_source.save(DESKTOP_ICON_DIR / "icon.png", optimize=True)
+desktop_source.save(
+    DESKTOP_ICON_DIR / "icon.ico",
+    format="ICO",
+    sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128)],
+)

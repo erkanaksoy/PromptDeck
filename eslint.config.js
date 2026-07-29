@@ -3,7 +3,16 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/**", "node_modules/**", "promptdeck.zip"] },
+  {
+    ignores: [
+      "dist/**",
+      "apps/*/dist/**",
+      "apps/*/src-tauri/target/**",
+      "target/**",
+      "node_modules/**",
+      "promptdeck.zip"
+    ]
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

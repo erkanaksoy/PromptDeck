@@ -1,5 +1,18 @@
 # PromptDeck
 
+## PromptDeck Desktop
+
+This repository now also contains a Windows 11 Tauri 2 desktop dashboard under `apps/desktop`.
+It synchronizes the existing extension through a dedicated Rust Chrome Native Messaging host and a
+local Windows named pipe. The desktop provides full and compact layouts, system tray,
+always-on-top, autostart, monitor-aware window restoration, SQLite caching, disconnected state,
+and an offline development simulator.
+
+Start with [the desktop README](apps/desktop/README.md), then follow
+[native-host registration](docs/native-messaging.md) and the
+[manual test plan](docs/desktop-testing.md). Desktop integration remains optional; the Chrome
+extension continues to work independently.
+
 PromptDeck is a local-only Chrome extension that consolidates open ChatGPT, Claude, and Gemini conversations into one calm, colorful attention dashboard. It tracks generation, unread completions, explicit requests for user input, platform errors, idle conversations, and recently closed chats across multiple Chrome windows.
 
 PromptDeck does not use a backend, remote AI classifier, analytics, telemetry, or cloud storage.

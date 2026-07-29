@@ -39,6 +39,8 @@ import {
   recordNotification,
   shouldNotify
 } from "./notification-manager";
+import { isDesktopCommand, NativeMessagingClient } from "./native-client";
+import type { AnyProtocolEnvelope } from "../../packages/protocol/src/index";
 
 let stateQueue: Promise<unknown> = Promise.resolve();
 const SESSION_PREVIEWS_KEY = "promptdeck-session-previews";
@@ -196,14 +198,25 @@ async function processObservation(
         state.settings.suppressFinishedWhenVisible &&
         Boolean(tab?.active) &&
         request.payload.isVisible;
+      const desktopConnected = nativeClient.getStatus().state === "connected";
+      const extensionIsNotificationSource =
+        state.settings.notificationSource === "extension" ||
+        state.settings.notificationSource === "both" ||
+        (state.settings.notificationSource === "automatic" && !desktopConnected);
       const eventKey = notificationEventKey(result.record, event);
-      if (enabled && !suppressed && shouldNotify(result.record, eventKey)) {
+      if (
+        enabled &&
+        extensionIsNotificationSource &&
+        !suppressed &&
+        shouldNotify(result.record, eventKey)
+      ) {
         result.record = recordNotification(result.record, eventKey);
         state.conversations[key] = result.record;
         await sendNotification(result.record, event, eventKey).catch(() => undefined);
       }
     }
     await saveState(state);
+    nativeClient.send("CONVERSATION_UPSERT", { conversation: result.record });
   });
 }
 
@@ -272,6 +285,7 @@ async function registerUnavailableTab(tab: chrome.tabs.Tab): Promise<void> {
       lastObservedAt: now
     };
     await saveState(state);
+    nativeClient.send("CONVERSATION_UPSERT", { conversation: state.conversations[key] });
   });
 }
 
@@ -284,11 +298,107 @@ async function patchConversation(
     const record = state.conversations[key];
     if (!record) throw new Error("Conversation not found");
     const updated = updater(record);
-    if (updated) state.conversations[key] = updated;
-    else delete state.conversations[key];
+    if (updated) {
+      state.conversations[key] = updated;
+      nativeClient.send("CONVERSATION_UPSERT", { conversation: updated });
+    } else {
+      delete state.conversations[key];
+      nativeClient.send("CONVERSATION_REMOVE", { conversationKey: key, removedAt: Date.now() });
+    }
     await saveState(state);
   });
 }
+
+async function handleDesktopCommand(message: AnyProtocolEnvelope): Promise<void> {
+  if (!isDesktopCommand(message)) return;
+  let request: ExtensionRequest;
+  switch (message.type) {
+    case "FOCUS_CONVERSATION":
+    case "OPEN_RECENT_CONVERSATION":
+      request = { type: "FOCUS_CONVERSATION", conversationKey: message.payload.conversationKey };
+      break;
+    case "MARK_READ":
+      request = { type: "MARK_READ", conversationKey: message.payload.conversationKey };
+      break;
+    case "MARK_UNREAD":
+      request = { type: "MARK_UNREAD", conversationKey: message.payload.conversationKey };
+      break;
+    case "SET_LABELS":
+      request = {
+        type: "SET_LABELS",
+        conversationKey: message.payload.conversationKey,
+        labelIds: message.payload.labelIds
+      };
+      break;
+    case "SET_MANUAL_OVERRIDE":
+      request = {
+        type: "SET_MANUAL_OVERRIDE",
+        conversationKey: message.payload.conversationKey,
+        value: message.payload.override.value
+      };
+      break;
+    case "CLEAR_MANUAL_OVERRIDE":
+      request = { type: "CLEAR_MANUAL_OVERRIDE", conversationKey: message.payload.conversationKey };
+      break;
+    case "RESCAN_TABS":
+      request = { type: "RESCAN_TABS" };
+      break;
+    case "UPDATE_SHARED_SETTINGS":
+      request = { type: "UPDATE_SETTINGS", patch: message.payload.patch };
+      break;
+  }
+  const result = await handleRequest(request, {});
+  if (result.ok) {
+    if (
+      ["SET_LABELS", "MARK_READ", "MARK_UNREAD", "SET_MANUAL_OVERRIDE", "CLEAR_MANUAL_OVERRIDE"]
+        .includes(message.type) &&
+      "conversationKey" in message.payload &&
+      "mutationId" in message.payload &&
+      "updatedAt" in message.payload
+    ) {
+      const mutationPayload = message.payload as {
+        conversationKey: string;
+        updatedAt: number;
+        mutationId: string;
+      };
+      const field =
+        message.type === "SET_LABELS"
+          ? "labels"
+          : message.type === "MARK_READ" || message.type === "MARK_UNREAD"
+            ? "readState"
+            : "manualOverride";
+      await patchConversation(mutationPayload.conversationKey, (record) => ({
+        ...record,
+        sharedFields: {
+          ...record.sharedFields,
+          [field]: {
+            updatedAt: mutationPayload.updatedAt,
+            source: "desktop",
+            mutationId: mutationPayload.mutationId
+          }
+        }
+      }));
+    }
+    nativeClient.send("STATE_APPLIED", {
+      appliedMessageId: message.messageId,
+      ...("mutationId" in message.payload && typeof message.payload.mutationId === "string"
+        ? { mutationId: message.payload.mutationId }
+        : {})
+    });
+    await nativeClient.sendSnapshot();
+  } else {
+    nativeClient.send("ERROR_RESPONSE", {
+      code: "COMMAND_FAILED",
+      message: result.error,
+      relatedMessageId: message.messageId
+    });
+  }
+}
+
+const nativeClient = new NativeMessagingClient(
+  async () => dashboardState(cleanupRecent(await loadState())),
+  handleDesktopCommand
+);
 
 async function handleRequest(
   request: ExtensionRequest,
@@ -306,6 +416,8 @@ async function handleRequest(
       }
       case "GET_VIEW_DELAY":
         return { ok: true, delayMs: (await loadState()).settings.markViewedDelayMs };
+      case "GET_DESKTOP_STATUS":
+        return { ok: true, desktopStatus: nativeClient.getStatus() };
       case "OPEN_DASHBOARD":
         await openDashboard();
         return { ok: true };
@@ -318,31 +430,73 @@ async function handleRequest(
         return { ok: true };
       }
       case "MARK_READ":
-        await patchConversation(request.conversationKey, (record) => markRead(record));
+        await patchConversation(request.conversationKey, (record) => ({
+          ...markRead(record),
+          sharedFields: {
+            ...record.sharedFields,
+            readState: {
+              updatedAt: Date.now(),
+              source: "extension",
+              mutationId: crypto.randomUUID()
+            }
+          }
+        }));
         return { ok: true };
       case "MARK_UNREAD":
         await patchConversation(request.conversationKey, (record) => ({
           ...record,
           isUnread: true,
           automaticStatus:
-            effectiveStatus(record) === "idle" ? "finished_unread" : record.automaticStatus
+            effectiveStatus(record) === "idle" ? "finished_unread" : record.automaticStatus,
+          sharedFields: {
+            ...record.sharedFields,
+            readState: {
+              updatedAt: Date.now(),
+              source: "extension",
+              mutationId: crypto.randomUUID()
+            }
+          }
         }));
         return { ok: true };
       case "SET_LABELS":
         await patchConversation(request.conversationKey, (record) => ({
           ...record,
-          labelIds: [...new Set(request.labelIds)]
+          labelIds: [...new Set(request.labelIds)],
+          sharedFields: {
+            ...record.sharedFields,
+            labels: {
+              updatedAt: Date.now(),
+              source: "extension",
+              mutationId: crypto.randomUUID()
+            }
+          }
         }));
         return { ok: true };
       case "SET_MANUAL_OVERRIDE":
-        await patchConversation(request.conversationKey, (record) =>
-          setManualOverride(record, request.value)
-        );
+        await patchConversation(request.conversationKey, (record) => ({
+          ...setManualOverride(record, request.value),
+          sharedFields: {
+            ...record.sharedFields,
+            manualOverride: {
+              updatedAt: Date.now(),
+              source: "extension",
+              mutationId: crypto.randomUUID()
+            }
+          }
+        }));
         return { ok: true };
       case "CLEAR_MANUAL_OVERRIDE":
         await patchConversation(request.conversationKey, (record) => ({
           ...record,
-          manualStatusOverride: undefined
+          manualStatusOverride: undefined,
+          sharedFields: {
+            ...record.sharedFields,
+            manualOverride: {
+              updatedAt: Date.now(),
+              source: "extension",
+              mutationId: crypto.randomUUID()
+            }
+          }
         }));
         return { ok: true };
       case "REMOVE_RECENT":
@@ -352,6 +506,10 @@ async function handleRequest(
         return { ok: true };
       case "UPDATE_SETTINGS":
         await updateSettings(request.patch as Partial<Settings>);
+        nativeClient.send("SETTINGS_UPDATE", { patch: request.patch });
+        if (typeof request.patch.desktopIntegrationEnabled === "boolean") {
+          nativeClient.setEnabled(request.patch.desktopIntegrationEnabled);
+        }
         return { ok: true };
       case "CLEAR_PREVIEWS":
         await clearStoredPreviews();
@@ -390,8 +548,10 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     for (const tab of remainingTabs) {
       if (tab.id !== undefined) windows.set(tab.id, tab.windowId);
     }
-    state.conversations[record.key] = detachTab(record, tabId, windows);
+    const detached = detachTab(record, tabId, windows);
+    state.conversations[record.key] = detached;
     await saveState(state);
+    nativeClient.send("CONVERSATION_UPSERT", { conversation: detached });
   });
 });
 
@@ -436,3 +596,4 @@ chrome.runtime.onStartup.addListener(() => {
 void chrome.alarms.create(RECENT_CLEANUP_ALARM, { periodInMinutes: 360 });
 void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
 void rescanTabs();
+void loadState().then((state) => nativeClient.start(state.settings.desktopIntegrationEnabled));

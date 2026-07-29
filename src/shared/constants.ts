@@ -13,11 +13,13 @@ export const DEFAULT_SETTINGS: Settings = {
   notifyWaiting: true,
   notifyError: true,
   suppressFinishedWhenVisible: true,
+  notificationSource: "automatic",
   markViewedDelayMs: 900,
   defaultView: "grid",
   viewMode: "grid",
   sortMode: "priority",
-  firstRunComplete: false
+  firstRunComplete: false,
+  desktopIntegrationEnabled: true
 };
 
 export const LABELS: LabelDefinition[] = [

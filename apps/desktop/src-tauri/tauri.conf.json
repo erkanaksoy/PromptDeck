@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "PromptDeck Desktop",
+  "version": "1.0.0",
+  "identifier": "com.promptdeck.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm --filter @promptdeck/desktop dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm --filter @promptdeck/desktop build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "PromptDeck Desktop",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 320,
+        "minHeight": 480,
+        "resizable": true,
+        "center": true,
+        "visible": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi"],
+    "externalBin": ["binaries/promptdeck-native-host"],
+    "category": "Productivity",
+    "shortDescription": "Local AI conversation attention dashboard",
+    "longDescription": "PromptDeck Desktop monitors locally detected ChatGPT, Claude, and Gemini conversations through the PromptDeck Chrome extension.",
+    "windows": {
+      "wix": {
+        "language": "en-US"
+      }
+    },
+    "icon": ["icons/icon.png", "icons/icon.ico"]
+  }
+}

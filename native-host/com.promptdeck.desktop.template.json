@@ -1,0 +1,9 @@
+{
+  "name": "com.promptdeck.desktop",
+  "description": "PromptDeck desktop communication bridge",
+  "path": "__ABSOLUTE_NATIVE_HOST_EXE__",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://__PROMPTDECK_EXTENSION_ID__/"
+  ]
+}
