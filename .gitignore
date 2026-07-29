@@ -1,0 +1,38 @@
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+
+# Local browser profiles and test user data
+.chrome-profile/
+chrome-profile/
+browser-profile/
+user-data-dir/
+
+# Packages, logs, and temporary files
+promptdeck.zip
+*.log
+*.tmp
+*.temp
+.tmp/
+tmp/
+temp/
+
+# OS and editor metadata
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

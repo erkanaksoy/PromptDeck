@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">PromptDeck layered dashboard cards</title>
+  <defs>
+    <linearGradient id="g" x1="18" y1="10" x2="110" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8668f2"/>
+      <stop offset="1" stop-color="#4f3bc7"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="30" fill="url(#g)"/>
+  <rect x="22" y="25" width="84" height="61" rx="12" fill="#33248f" opacity=".48"/>
+  <rect x="16" y="34" width="96" height="69" rx="13" fill="#fff"/>
+  <rect x="27" y="47" width="21" height="42" rx="6" fill="#61a8ff"/>
+  <rect x="54" y="47" width="21" height="42" rx="6" fill="#ffc267"/>
+  <rect x="81" y="47" width="20" height="42" rx="6" fill="#58ceb1"/>
+  <circle cx="37.5" cy="57.5" r="3.5" fill="#fff"/>
+  <circle cx="64.5" cy="57.5" r="3.5" fill="#fff"/>
+  <circle cx="91" cy="57.5" r="3.5" fill="#fff"/>
+</svg>
