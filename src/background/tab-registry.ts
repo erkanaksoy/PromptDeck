@@ -7,21 +7,11 @@ export interface OpenConversationTab {
   windowId: number;
 }
 
-export interface ReconciledOpenTabs {
-  state: StoredState;
-  changed: ConversationRecord[];
-  removedKeys: string[];
-}
-
-function sameNumbers(left: number[], right: number[]): boolean {
-  return left.length === right.length && left.every((value, index) => value === right[index]);
-}
-
 export function reconcileOpenTabs(
   state: StoredState,
   openTabs: OpenConversationTab[],
   now = Date.now()
-): ReconciledOpenTabs {
+): StoredState {
   const tabsByConversation = new Map<string, { tabIds: Set<number>; windowIds: Set<number> }>();
   for (const tab of openTabs) {
     const group = tabsByConversation.get(tab.conversationKey) ?? {
@@ -34,13 +24,10 @@ export function reconcileOpenTabs(
   }
 
   const conversations = { ...state.conversations };
-  const changed: ConversationRecord[] = [];
-  const removedKeys: string[] = [];
   for (const [key, record] of Object.entries(state.conversations)) {
     const group = tabsByConversation.get(key);
     if (!group && !record.conversationId) {
       delete conversations[key];
-      removedKeys.push(key);
       continue;
     }
     const openTabIds = group ? [...group.tabIds].sort((a, b) => a - b) : [];
@@ -66,23 +53,10 @@ export function reconcileOpenTabs(
             : {})
         };
 
-    if (
-      !sameNumbers(record.openTabIds, updated.openTabIds) ||
-      !sameNumbers(record.windowIds, updated.windowIds) ||
-      record.primaryTabId !== updated.primaryTabId ||
-      record.closedAt !== updated.closedAt ||
-      record.recentExpiresAt !== updated.recentExpiresAt
-    ) {
-      conversations[key] = updated;
-      changed.push(updated);
-    }
+    conversations[key] = updated;
   }
 
-  return {
-    state: { ...state, conversations },
-    changed,
-    removedKeys
-  };
+  return { ...state, conversations };
 }
 
 export function attachTab(

@@ -9,7 +9,6 @@ export type ExtensionRequest =
   | { type: "TAB_OBSERVATION"; payload: TabObservation }
   | { type: "GET_DASHBOARD_STATE" }
   | { type: "GET_VIEW_DELAY" }
-  | { type: "GET_DESKTOP_STATUS" }
   | { type: "OPEN_DASHBOARD" }
   | { type: "RESCAN_TABS" }
   | { type: "FOCUS_CONVERSATION"; conversationKey: string }
@@ -35,11 +34,5 @@ export type ExtensionResponse =
       state?: DashboardState;
       count?: number;
       delayMs?: number;
-      desktopStatus?: {
-        state: string;
-        lastConnectedAt?: number;
-        lastError?: string;
-        retryAt?: number;
-      };
     }
   | { ok: false; error: string };

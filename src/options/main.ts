@@ -8,7 +8,6 @@ if (!rootElement) throw new Error("Options root missing");
 const root: HTMLDivElement = rootElement;
 
 let settings: Settings | null = null;
-let desktopStatus = "Checking…";
 
 function selected(value: string, expected: string): string {
   return value === expected ? " selected" : "";
@@ -21,10 +20,6 @@ async function render(message = ""): Promise<void> {
     return;
   }
   settings = response.state.settings;
-  const statusResponse = await send({ type: "GET_DESKTOP_STATUS" });
-  desktopStatus = statusResponse.ok && statusResponse.desktopStatus
-    ? statusResponse.desktopStatus.state.replaceAll("_", " ")
-    : "unavailable";
   applyTheme(settings.theme);
   root.innerHTML = `<div class="settings-shell">
     <header class="settings-header"><a class="brand" href="dashboard.html"><img src="/icons/icon-48.png" alt="" width="38" height="38" /><span><strong>PromptDeck</strong><small>Settings</small></span></a><a class="secondary button-link" href="dashboard.html">← Dashboard</a></header>
@@ -48,13 +43,6 @@ async function render(message = ""): Promise<void> {
         <div class="button-row"><button data-command="CLEAR_PREVIEWS">Clear stored previews</button><button data-command="CLEAR_RECENT">Clear recent conversations</button><button class="danger" data-command="CLEAR_ALL_DATA">Clear all PromptDeck data</button></div>
       </div></section>
       <section class="settings-section"><div><h2>Notifications</h2><p>Chrome controls final delivery and presentation.</p></div><div class="settings-controls">
-        <label>Notification source<select id="notificationSource">
-          <option value="automatic"${selected(settings.notificationSource, "automatic")}>Desktop when connected; Chrome fallback</option>
-          <option value="extension"${selected(settings.notificationSource, "extension")}>Chrome extension</option>
-          <option value="desktop"${selected(settings.notificationSource, "desktop")}>Desktop app</option>
-          <option value="both"${selected(settings.notificationSource, "both")}>Both</option>
-          <option value="none"${selected(settings.notificationSource, "none")}>None</option>
-        </select></label>
         <label class="toggle-row"><span><strong>Generation finished</strong><small>Notify when a new response completes.</small></span><input id="notifyFinished" type="checkbox" ${settings.notifyFinished ? "checked" : ""}/></label>
         <label class="toggle-row"><span><strong>Waiting for input</strong><small>Notify for explicit requests that need you.</small></span><input id="notifyWaiting" type="checkbox" ${settings.notifyWaiting ? "checked" : ""}/></label>
         <label class="toggle-row"><span><strong>Errors</strong><small>Notify when the platform reports a failure.</small></span><input id="notifyError" type="checkbox" ${settings.notifyError ? "checked" : ""}/></label>
@@ -70,9 +58,6 @@ async function render(message = ""): Promise<void> {
           </select>
         </label>
         <button id="rescan">Rescan supported tabs now</button>
-      </div></section>
-      <section class="settings-section"><div><h2>Desktop integration</h2><p>Optional local-only synchronization through Chrome Native Messaging.</p></div><div class="settings-controls">
-        <label class="toggle-row"><span><strong>Enable PromptDeck Desktop</strong><small>Current status: ${desktopStatus}</small></span><input id="desktopIntegrationEnabled" type="checkbox" ${settings.desktopIntegrationEnabled ? "checked" : ""}/></label>
       </div></section>
       <p class="privacy-note">PromptDeck never sends conversation data to external servers. It does not read cookies, credentials, localStorage, request headers, or hidden page data.</p>
     </main>

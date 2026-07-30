@@ -89,13 +89,12 @@ describe("authoritative tab reconciliation", () => {
       [{ conversationKey: "one", tabId: 7, windowId: 20 }],
       5000
     );
-    const reconciled = result.state.conversations.one!;
+    const reconciled = result.conversations.one!;
 
     expect(reconciled.openTabIds).toEqual([7]);
     expect(reconciled.primaryTabId).toBe(7);
     expect(reconciled.windowIds).toEqual([20]);
     expect(reconciled.closedAt).toBeUndefined();
-    expect(result.changed.map((item) => item.key)).toEqual(["one"]);
   });
 
   it("moves records with missing tabs to Recent", () => {
@@ -108,7 +107,7 @@ describe("authoritative tab reconciliation", () => {
     });
 
     const result = reconcileOpenTabs(state, [], 5000);
-    const reconciled = result.state.conversations.one!;
+    const reconciled = result.conversations.one!;
 
     expect(reconciled.openTabIds).toEqual([]);
     expect(reconciled.primaryTabId).toBeUndefined();
@@ -134,8 +133,8 @@ describe("authoritative tab reconciliation", () => {
       [{ conversationKey: "two", tabId: 7, windowId: 30 }],
       5000
     );
-    const first = result.state.conversations.one!;
-    const second = result.state.conversations.two!;
+    const first = result.conversations.one!;
+    const second = result.conversations.two!;
 
     expect(first.openTabIds).toEqual([]);
     expect(second.openTabIds).toEqual([7]);
@@ -148,10 +147,9 @@ describe("authoritative tab reconciliation", () => {
     const openTabs = [{ conversationKey: "one", tabId: 1, windowId: 10 }];
 
     const first = reconcileOpenTabs(state, openTabs, 5000);
-    const second = reconcileOpenTabs(first.state, openTabs, 6000);
+    const second = reconcileOpenTabs(first, openTabs, 6000);
 
-    expect(first.changed).toEqual([]);
-    expect(second.changed).toEqual([]);
+    expect(second).toEqual(first);
   });
 
   it("removes legacy aggregate records for pages without conversation IDs", () => {
@@ -169,8 +167,7 @@ describe("authoritative tab reconciliation", () => {
       5000
     );
 
-    expect(result.state.conversations.legacy).toBeUndefined();
-    expect(result.removedKeys).toEqual(["legacy"]);
+    expect(result.conversations.legacy).toBeUndefined();
   });
 
   it("removes a closed tab-scoped placeholder instead of adding it to Recent", () => {
@@ -186,7 +183,6 @@ describe("authoritative tab reconciliation", () => {
 
     const result = reconcileOpenTabs(state, [], 5000);
 
-    expect(result.state.conversations.temporary).toBeUndefined();
-    expect(result.removedKeys).toEqual(["temporary"]);
+    expect(result.conversations.temporary).toBeUndefined();
   });
 });

@@ -10,10 +10,11 @@
   --shadow: 0 10px 28px rgb(36 48 74 / 8%);
   --radius: 18px;
   --generating: #3478e5;
-  --finished: #159a83;
-  --waiting: #d67a0c;
+  --finished: #1f9d55;
+  --waiting: #c99100;
   --error: #d04444;
   --idle: #718096;
+  --idle-card: #5f7f9f;
   --recent: #805ad5;
   --unknown: #64748b;
   color: var(--text);
@@ -33,10 +34,11 @@
   --border: #313949;
   --shadow: 0 14px 36px rgb(0 0 0 / 22%);
   --generating: #69a5ff;
-  --finished: #42c8ad;
-  --waiting: #f4a942;
+  --finished: #57d17b;
+  --waiting: #f2c94c;
   --error: #ff7777;
   --idle: #9aa7bb;
+  --idle-card: #7fa0c0;
   --recent: #b494f2;
 }
 
@@ -129,6 +131,15 @@ button:hover,
   align-items: center;
   justify-content: space-between;
   gap: 20px;
+}
+
+.topbar {
+  position: sticky;
+  z-index: 50;
+  top: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(16px);
 }
 
 .brand {
@@ -380,27 +391,31 @@ select {
 }
 
 .conversation-card {
-  --vendor-color: #7c879f;
+  --status-color: var(--idle);
   position: relative;
   min-width: 0;
   overflow: visible;
   padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--vendor-color) 32%, var(--border));
-  border-left: 4px solid var(--vendor-color);
+  border: 1px solid color-mix(in srgb, var(--status-color) 38%, var(--border));
+  border-left: 4px solid var(--status-color);
   border-radius: var(--radius);
   background:
     linear-gradient(
       135deg,
-      color-mix(in srgb, var(--vendor-color) 18%, var(--surface)) 0%,
-      color-mix(in srgb, var(--vendor-color) 6%, var(--surface)) 55%,
+      color-mix(in srgb, var(--status-color) 18%, var(--surface)) 0%,
+      color-mix(in srgb, var(--status-color) 6%, var(--surface)) 55%,
       var(--surface) 100%
     );
   box-shadow: var(--shadow);
 }
 
-.vendor-chatgpt { --vendor-color: #35b99d; }
-.vendor-claude { --vendor-color: #dd7b47; }
-.vendor-gemini { --vendor-color: #6687ed; }
+.card-error { --status-color: var(--error); }
+.card-waiting { --status-color: var(--waiting); }
+.card-finished_unread { --status-color: var(--finished); }
+.card-generating { --status-color: var(--generating); }
+.card-idle { --status-color: var(--idle-card); }
+.card-recent { --status-color: var(--recent); }
+.card-unknown { --status-color: var(--unknown); }
 
 .card-stripe {
   position: absolute;
@@ -409,15 +424,8 @@ select {
   right: 18px;
   height: 3px;
   border-radius: 0 0 5px 5px;
-  background: var(--idle);
+  background: var(--status-color);
 }
-
-.card-generating .card-stripe { background: var(--generating); }
-.card-finished_unread .card-stripe { background: var(--finished); }
-.card-waiting .card-stripe { background: var(--waiting); }
-.card-error .card-stripe { background: var(--error); }
-.card-recent .card-stripe { background: var(--recent); }
-.card-unknown .card-stripe { background: var(--unknown); }
 
 .card-header {
   display: flex;

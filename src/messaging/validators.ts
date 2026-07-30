@@ -34,7 +34,6 @@ export function isExtensionRequest(value: unknown): value is ExtensionRequest {
     [
       "GET_DASHBOARD_STATE",
       "GET_VIEW_DELAY",
-      "GET_DESKTOP_STATUS",
       "OPEN_DASHBOARD",
       "RESCAN_TABS",
       "CLEAR_PREVIEWS",

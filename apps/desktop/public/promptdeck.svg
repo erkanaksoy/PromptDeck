@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PromptDeck">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9b87f5"/><stop offset="1" stop-color="#42d7c7"/></linearGradient></defs>
-  <rect width="64" height="64" rx="16" fill="#15162b"/>
-  <path d="M14 17h29a7 7 0 0 1 7 7v13a7 7 0 0 1-7 7H29l-10 8v-8h-5a7 7 0 0 1-7-7V24a7 7 0 0 1 7-7Z" fill="url(#g)"/>
-  <path d="M19 27h20M19 34h14" stroke="#15162b" stroke-width="4" stroke-linecap="round"/>
-</svg>

@@ -1,6 +1,6 @@
 {
   "name": "promptdeck",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Local-only attention dashboard for ChatGPT, Claude, and Gemini tabs.",
@@ -11,17 +11,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package": "node scripts/package.mjs",
-    "desktop:dev": "pnpm --filter @promptdeck/desktop exec tauri dev",
-    "desktop:build": "pnpm --filter @promptdeck/desktop build",
-    "desktop:test": "pnpm --filter @promptdeck/desktop test",
-    "desktop:typecheck": "pnpm --filter @promptdeck/desktop typecheck",
-    "desktop:lint": "pnpm --filter @promptdeck/desktop lint",
-    "desktop:package": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Build-PromptDeckDesktop.ps1",
-    "native-host:build": "cargo build --release -p promptdeck-native-host",
-    "native-host:register": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Register-PromptDeckNativeHost.ps1",
-    "native-host:unregister": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Register-PromptDeckNativeHost.ps1 -Unregister",
-    "native-host:validate": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/Register-PromptDeckNativeHost.ps1 -Validate"
+    "package": "node scripts/package.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

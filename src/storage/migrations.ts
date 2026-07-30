@@ -54,7 +54,13 @@ export function migrateStoredState(raw: unknown): StoredState {
     };
   }
   const rawSettings = isRecord(raw.settings) ? raw.settings : {};
-  state.settings = { ...DEFAULT_SETTINGS, ...rawSettings } as StoredState["settings"];
+  const settings = { ...DEFAULT_SETTINGS };
+  for (const key of Object.keys(DEFAULT_SETTINGS) as Array<keyof typeof DEFAULT_SETTINGS>) {
+    if (rawSettings[key] !== undefined) {
+      (settings as Record<string, unknown>)[key] = rawSettings[key];
+    }
+  }
+  state.settings = settings;
   state.windowLabels = isRecord(raw.windowLabels)
     ? Object.fromEntries(
         Object.entries(raw.windowLabels).filter(

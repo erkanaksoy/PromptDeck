@@ -1,18 +1,5 @@
 # PromptDeck
 
-## PromptDeck Desktop
-
-This repository now also contains a Windows 11 Tauri 2 desktop dashboard under `apps/desktop`.
-It synchronizes the existing extension through a dedicated Rust Chrome Native Messaging host and a
-local Windows named pipe. The desktop provides full and compact layouts, system tray,
-always-on-top, autostart, monitor-aware window restoration, SQLite caching, disconnected state,
-and an offline development simulator.
-
-Start with [the desktop README](apps/desktop/README.md), then follow
-[native-host registration](docs/native-messaging.md) and the
-[manual test plan](docs/desktop-testing.md). Desktop integration remains optional; the Chrome
-extension continues to work independently.
-
 PromptDeck is a local-only Chrome extension that consolidates open ChatGPT, Claude, and Gemini conversations into one calm, colorful attention dashboard. It tracks generation, unread completions, explicit requests for user input, platform errors, idle conversations, and recently closed chats across multiple Chrome windows.
 
 PromptDeck does not use a backend, remote AI classifier, analytics, telemetry, or cloud storage.
@@ -23,16 +10,18 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 
 ## Features
 
-- Manifest V3 service worker and Chrome-only desktop experience.
+- Manifest V3 service worker and Chrome dashboard.
 - One deduplicated record per platform conversation, even when it is open in multiple tabs.
 - Grid and independently scrollable Kanban views.
 - Automatic states: Generating, Finished / Unread, Waiting for Input, Error, Idle, and Detection unavailable.
+- Status-colored conversation cards: green Finished, yellow Waiting, red Error, and slate-blue Idle.
+- Dismissible first-run welcome panel and a sticky dashboard header.
 - Seven-day Recent retention after the last open copy of a conversation closes.
 - Predefined multi-label organization: Work, Research, Coding, Personal, Urgent, Review, Parked, and Done.
 - Combined platform, status, label, window, unread, and text filters.
 - Deterministic sorting by attention, status, unread, activity, title, platform, window, label, or close time.
 - Manual read/unread, Waiting, Idle, label, copy URL, reopen, and Recent-removal actions.
-- Local desktop notifications for finished generation, Waiting, and Error transitions with fingerprint-based deduplication.
+- Local Chrome notifications for finished generation, Waiting, and Error transitions with fingerprint-based deduplication.
 - Light, dark, and system themes.
 - Message previews hidden and not persisted by default.
 - Manual rescan and safe content-script recovery.
@@ -75,7 +64,7 @@ All PromptDeck data stays in `chrome.storage.local` on this Chrome installation.
 
 - `tabs`: enumerate supported tabs in every normal window, match URLs, focus the correct tab/window, and avoid duplicate dashboard tabs.
 - `storage`: persist the versioned local schema, labels, unread state, settings, fingerprints, and Recent records.
-- `notifications`: show the three user-configurable local desktop notification categories.
+- `notifications`: show the three user-configurable local Chrome notification categories.
 - `alarms`: perform MV3-compatible Recent cleanup every six hours.
 - `scripting`: safely reinject the packaged content script during a manual recovery scan when it is missing.
 - Host access is restricted to ChatGPT, Claude, and Gemini. There is no `<all_urls>`, cookies, browsing history, or web request permission.
@@ -163,7 +152,7 @@ Each site’s selectors live in `src/platforms/<platform>/selectors.ts`. See [do
 
 - Live selectors were implemented from layered semantic fallbacks and sanitized fixtures, but authenticated current ChatGPT, Claude, and Gemini pages still require manual live verification.
 - Platform DOM changes can temporarily reduce a card to Detection unavailable.
-- Temporary/new chat routes without a durable ID use a normalized URL identity and may be replaced after the platform assigns a canonical URL.
+- Temporary/new chat routes use a tab-scoped identity until the platform assigns a durable conversation ID.
 - Waiting detection is English-focused in version 1.
 - Chrome and the operating system ultimately control whether and how notifications appear.
 - The focus delay setting is used by content visibility stabilization; rapid focus changes may delay acknowledgement until the next observation.

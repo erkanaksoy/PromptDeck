@@ -7,7 +7,6 @@ export default tseslint.config(
     ignores: [
       "dist/**",
       "apps/*/dist/**",
-      "apps/*/src-tauri/target/**",
       "target/**",
       "node_modules/**",
       "promptdeck.zip"

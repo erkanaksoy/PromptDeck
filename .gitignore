@@ -1,10 +1,6 @@
 node_modules/
 .pnpm-store/
 dist/
-target/
-apps/desktop/src-tauri/binaries/*.exe
-apps/desktop/src-tauri/gen/
-artifacts/
 coverage/
 .vite/
 *.tsbuildinfo

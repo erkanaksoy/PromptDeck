@@ -111,7 +111,7 @@ function card(record: ConversationRecord): string {
   const unread = record.isUnread ? '<span class="attention-dot">Unread</span>' : "";
   const duplicate = record.openTabIds.length > 1 ? ` · ${record.openTabIds.length} tabs` : "";
 
-  return `<article class="conversation-card vendor-${record.platform} card-${status}" data-key="${escapeText(record.key)}">
+  return `<article class="conversation-card card-${status}" data-key="${escapeText(record.key)}">
     <div class="card-stripe" aria-hidden="true"></div>
     <header class="card-header">
       <span class="platform-mark platform-${record.platform}" aria-hidden="true">${record.platform === "chatgpt" ? "C" : record.platform === "claude" ? "A" : "G"}</span>
@@ -294,7 +294,7 @@ function render(): void {
       ${firstRun ? `<section class="welcome-panel">
         <div><span class="eyebrow">Welcome to PromptDeck</span><h1>All your AI conversations, one calm view.</h1>
         <p>PromptDeck only watches open ChatGPT, Claude, and Gemini tabs. Everything stays on this device, and message previews are hidden by default.</p></div>
-        <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a></div>
+        <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a><button class="text-button" id="hide-welcome">Hide</button></div>
       </section>` : ""}
       <section class="summary" aria-label="Conversation summary">
         <div class="summary-intro"><span class="eyebrow">Attention overview</span><h1>${activeConversationCount} active conversation${activeConversationCount === 1 ? "" : "s"}</h1><p>${openTabCount} open AI tab${openTabCount === 1 ? "" : "s"} across ChatGPT, Claude, and Gemini</p></div>
@@ -392,6 +392,13 @@ root.addEventListener("click", (event) => {
   if (target.closest("#clear-filters, #empty-clear")) {
     filters = structuredClone(EMPTY_FILTERS);
     render();
+    return;
+  }
+  if (target.closest("#hide-welcome")) {
+    void action(
+      { type: "UPDATE_SETTINGS", patch: { firstRunComplete: true } },
+      "Welcome banner hidden"
+    );
     return;
   }
   if (target.closest("#rescan, #empty-scan, #welcome-scan")) {

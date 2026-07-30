@@ -1,6 +1,2 @@
 allowBuilds:
   esbuild: true
-trustLockfile: true
-packages:
-  - "apps/*"
-  - "packages/*"
