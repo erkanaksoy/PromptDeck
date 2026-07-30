@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PromptDeck Desktop",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "identifier": "com.promptdeck.desktop",
   "build": {
     "beforeDevCommand": "pnpm --filter @promptdeck/desktop dev",

@@ -9,7 +9,7 @@ use tauri_plugin_notification::NotificationExt;
 use tokio::sync::mpsc;
 
 pub const PIPE_NAME: &str = r"\\.\pipe\PromptDeckDesktop-v1";
-const RECONCILIATION_INTERVAL: Duration = Duration::from_secs(15);
+const RECONCILIATION_INTERVAL: Duration = Duration::from_secs(10);
 
 #[derive(Default)]
 pub struct BridgeChannel {
@@ -173,5 +173,6 @@ mod tests {
         validate_message(&request).unwrap();
         assert_eq!(request["type"], "REQUEST_FULL_STATE");
         assert_eq!(request["source"], "desktop");
+        assert_eq!(RECONCILIATION_INTERVAL, Duration::from_secs(10));
     }
 }

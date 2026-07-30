@@ -32,6 +32,9 @@ const LABELS: Array<{ id: LabelId; name: string }> = [
 const PLATFORM_NAMES: Record<Platform, string> = {
   chatgpt: "ChatGPT", claude: "Claude", gemini: "Gemini"
 };
+const PLATFORM_MARKS: Record<Platform, string> = {
+  chatgpt: "◎", claude: "A", gemini: "✦"
+};
 const STATUS: Record<DisplayStatus, { name: string; icon: string }> = {
   error: { name: "Error", icon: "!" },
   waiting: { name: "Waiting", icon: "?" },
@@ -81,22 +84,21 @@ function ConversationCard({
 }) {
   const status = displayStatus(conversation);
   return (
-    <article className={`conversation-card card-${status} ${compact ? "compact-card" : ""}`}>
+    <article className={`conversation-card vendor-${conversation.platform} card-${status} ${compact ? "compact-card" : ""}`}>
       <div className="card-topline">
         <span className={`platform platform-${conversation.platform}`}>
+          <span className="provider-mark" aria-hidden="true">{PLATFORM_MARKS[conversation.platform]}</span>
           {PLATFORM_NAMES[conversation.platform]}
         </span>
-        <span className={`status status-${status}`}>
-          <span aria-hidden="true">{STATUS[status].icon}</span> {STATUS[status].name}
+        <span className="card-state">
+          {conversation.isUnread ? <span className="unread">Unread</span> : null}
+          <span className={`status status-${status}`}>
+            <span aria-hidden="true">{STATUS[status].icon}</span> {STATUS[status].name}
+          </span>
         </span>
       </div>
       <h3>{conversation.title}</h3>
       {!compact && conversation.error ? <p className="error-detail">{conversation.error.displayMessage}</p> : null}
-      <div className="card-meta">
-        {conversation.isUnread ? <span className="unread">Unread</span> : null}
-        {preferences.showTimestamps ? <time>{relativeTime(conversation.lastActivityAt)}</time> : null}
-        {conversation.windowIds[0] ? <span>Window {conversation.windowIds[0]}</span> : null}
-      </div>
       {preferences.showLabels && conversation.labelIds.length ? (
         <div className="label-row">
           {conversation.labelIds.map((id) => <span className={`label label-${id}`} key={id}>{LABELS.find((label) => label.id === id)?.name}</span>)}
@@ -157,7 +159,7 @@ function SettingsDialog({
           <fieldset><legend>Appearance</legend>
             <label>Theme<select value={preferences.theme} onChange={(event) => onChange({ theme: event.target.value as Theme })}><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
             <label>Compact density<select value={preferences.compactDensity} onChange={(event) => onChange({ compactDensity: event.target.value as "comfortable" | "dense" })}><option value="comfortable">Comfortable</option><option value="dense">Dense</option></select></label>
-            {toggle("showLabels", "Show labels")}{toggle("showTimestamps", "Show timestamps")}
+            {toggle("showLabels", "Show labels")}
             {toggle("showIdle", "Show Idle")}{toggle("showRecent", "Show Recent")}
           </fieldset>
           <fieldset><legend>Window</legend>
@@ -321,9 +323,13 @@ export function App() {
   return (
     <div className={`app-shell ${compact ? `compact density-${preferences.compactDensity}` : "full"}`}>
       <header className="app-header">
-        <div className="brand"><img src="/promptdeck.svg" alt="" /><div><strong>PromptDeck</strong><span>{compact ? "Compact Panel" : "Desktop"}</span></div></div>
+        <div className="header-brand">
+          <div className="brand"><img src="/promptdeck.svg" alt="" /><div><strong>PromptDeck</strong><span>{compact ? "Compact Panel" : "Desktop"}</span></div></div>
+          <span className="active-count" title={`${active} active conversation${active === 1 ? "" : "s"}`} aria-label={`${active} active conversation${active === 1 ? "" : "s"}`}>{active}</span>
+        </div>
         <div className="header-actions">
           <span className={`connection connection-${connection}`}><span aria-hidden="true">●</span>{statusText(connection)}</span>
+          <button className="header-sync" title="Request an immediate update from Chrome" onClick={() => void bridge.send("RESCAN_TABS", {})}>Sync</button>
           <button aria-pressed={preferences.alwaysOnTop} title="Always on top" onClick={() => updatePreferences({ alwaysOnTop: !preferences.alwaysOnTop })}>Pin</button>
           <button onClick={() => updatePreferences({ mode: compact ? "full" : "compact" })}>{compact ? "Full" : "Compact"}</button>
           <button aria-label="Settings" onClick={() => setSettingsOpen(true)}>Settings</button>
@@ -341,7 +347,6 @@ export function App() {
         </main>
       ) : (
         <main className="dashboard-main">
-          <section className="hero"><div><span className="eyebrow">Attention overview</span><h1>{active} active conversation{active === 1 ? "" : "s"}</h1><p>Across ChatGPT, Claude, and Gemini</p></div><button className="primary" onClick={() => void bridge.send("RESCAN_TABS", {})}>Sync now</button></section>
           <section className="summary-grid" aria-label="Conversation status summary">{counts.map(({ status, count }) => <button className={`summary-card summary-${status}`} key={status} onClick={() => setFilters((current) => ({ ...current, statuses: [status] }))}><span className="summary-icon">{STATUS[status].icon}</span><strong>{count}</strong><span>{STATUS[status].name}</span></button>)}</section>
           <section className="toolbar"><input type="search" aria-label="Search conversations" placeholder="Search conversations…" value={filters.query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}/><div className="filter-chips">{(["chatgpt", "claude", "gemini"] as Platform[]).map((platform) => <button aria-pressed={filters.platforms.includes(platform)} key={platform} onClick={() => setFilters((current) => ({ ...current, platforms: current.platforms.includes(platform) ? current.platforms.filter((item) => item !== platform) : [...current.platforms, platform] }))}>{PLATFORM_NAMES[platform]}</button>)}</div><div className="view-switch"><button aria-pressed={preferences.viewMode === "grid"} onClick={() => updatePreferences({ viewMode: "grid" })}>Grid</button><button aria-pressed={preferences.viewMode === "kanban"} onClick={() => updatePreferences({ viewMode: "kanban" })}>Kanban</button></div></section>
           {preferences.viewMode === "grid" ? <section className="conversation-grid">{visible.map((item) => <ConversationCard key={item.key} conversation={item} preferences={preferences} compact={false} canFocus={connection === "connected"} onCommand={command} />)}</section> : <section className="kanban">{(["error", "waiting", "finished_unread", "generating", "idle", "recent"] as DisplayStatus[]).map((status) => <section className={`kanban-column column-${status}`} key={status}><header><span>{STATUS[status].icon} {STATUS[status].name}</span><strong>{visible.filter((item) => displayStatus(item) === status).length}</strong></header>{visible.filter((item) => displayStatus(item) === status).map((item) => <ConversationCard key={item.key} conversation={item} preferences={preferences} compact={false} canFocus={connection === "connected"} onCommand={command} />)}</section>)}</section>}
