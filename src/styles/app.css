@@ -15,7 +15,7 @@
   --error: #d04444;
   --idle: #718096;
   --idle-card: #5f7f9f;
-  --recent: #805ad5;
+  --recent: #c026d3;
   --unknown: #64748b;
   color: var(--text);
   background: var(--bg);
@@ -39,7 +39,7 @@
   --error: #ff7777;
   --idle: #9aa7bb;
   --idle-card: #7fa0c0;
-  --recent: #b494f2;
+  --recent: #f0abfc;
 }
 
 * {
