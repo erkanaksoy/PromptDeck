@@ -270,12 +270,15 @@ button:hover,
 }
 
 .summary-stat {
+  --status-color: var(--idle-card);
   min-height: 94px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 9px;
   padding: 12px;
+  border-color: color-mix(in srgb, var(--status-color) 52%, var(--border));
+  background: color-mix(in srgb, var(--status-color) 24%, var(--surface));
   text-align: left;
 }
 
@@ -306,12 +309,12 @@ button:hover,
   font-weight: 800;
 }
 
-.stat-error { color: var(--error); }
-.stat-waiting { color: var(--waiting); }
-.stat-finished_unread { color: var(--finished); }
-.stat-generating { color: var(--generating); }
-.stat-idle { color: var(--idle); }
-.stat-recent { color: var(--recent); }
+.stat-error { --status-color: var(--error); color: var(--error); }
+.stat-waiting { --status-color: var(--waiting); color: var(--waiting); }
+.stat-finished_unread { --status-color: var(--finished); color: var(--finished); }
+.stat-generating { --status-color: var(--generating); color: var(--generating); }
+.stat-idle { --status-color: var(--idle-card); color: var(--idle); }
+.stat-recent { --status-color: var(--recent); color: var(--recent); }
 
 .control-panel {
   margin: 18px 0;
@@ -399,13 +402,7 @@ select {
   border: 1px solid color-mix(in srgb, var(--status-color) 38%, var(--border));
   border-left: 4px solid var(--status-color);
   border-radius: var(--radius);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--status-color) 18%, var(--surface)) 0%,
-      color-mix(in srgb, var(--status-color) 6%, var(--surface)) 55%,
-      var(--surface) 100%
-    );
+  background: color-mix(in srgb, var(--status-color) 30%, var(--surface));
   box-shadow: var(--shadow);
 }
 
