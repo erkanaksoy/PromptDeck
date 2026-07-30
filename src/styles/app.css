@@ -380,15 +380,27 @@ select {
 }
 
 .conversation-card {
+  --vendor-color: #7c879f;
   position: relative;
   min-width: 0;
   overflow: visible;
   padding: 18px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--vendor-color) 32%, var(--border));
+  border-left: 4px solid var(--vendor-color);
   border-radius: var(--radius);
-  background: var(--surface);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--vendor-color) 18%, var(--surface)) 0%,
+      color-mix(in srgb, var(--vendor-color) 6%, var(--surface)) 55%,
+      var(--surface) 100%
+    );
   box-shadow: var(--shadow);
 }
+
+.vendor-chatgpt { --vendor-color: #35b99d; }
+.vendor-claude { --vendor-color: #dd7b47; }
+.vendor-gemini { --vendor-color: #6687ed; }
 
 .card-stripe {
   position: absolute;

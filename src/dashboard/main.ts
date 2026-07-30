@@ -111,7 +111,7 @@ function card(record: ConversationRecord): string {
   const unread = record.isUnread ? '<span class="attention-dot">Unread</span>' : "";
   const duplicate = record.openTabIds.length > 1 ? ` · ${record.openTabIds.length} tabs` : "";
 
-  return `<article class="conversation-card card-${status}" data-key="${escapeText(record.key)}">
+  return `<article class="conversation-card vendor-${record.platform} card-${status}" data-key="${escapeText(record.key)}">
     <div class="card-stripe" aria-hidden="true"></div>
     <header class="card-header">
       <span class="platform-mark platform-${record.platform}" aria-hidden="true">${record.platform === "chatgpt" ? "C" : record.platform === "claude" ? "A" : "G"}</span>

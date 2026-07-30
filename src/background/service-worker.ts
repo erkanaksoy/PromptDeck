@@ -27,7 +27,13 @@ import {
   saveState,
   updateSettings
 } from "../storage/repository";
-import { cleanupRecent, detachTab, findConversationByTab } from "./tab-registry";
+import {
+  cleanupRecent,
+  detachTab,
+  findConversationByTab,
+  reconcileOpenTabs,
+  type OpenConversationTab
+} from "./tab-registry";
 import {
   effectiveStatus,
   markRead,
@@ -223,6 +229,29 @@ async function processObservation(
 async function rescanTabs(): Promise<number> {
   const patterns = ["https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*"];
   const tabs = await chrome.tabs.query({ url: patterns });
+  const openTabs: OpenConversationTab[] = [];
+  for (const tab of tabs) {
+    if (tab.id === undefined || !tab.url || tab.incognito) continue;
+    const platform = platformForUrl(tab.url);
+    const canonicalUrl = normalizeConversationUrl(tab.url);
+    if (!platform || !canonicalUrl) continue;
+    openTabs.push({
+      conversationKey: conversationKey(
+        platform,
+        canonicalUrl,
+        getConversationId(platform, canonicalUrl)
+      ),
+      tabId: tab.id,
+      windowId: tab.windowId
+    });
+  }
+  await queue(async () => {
+    const result = reconcileOpenTabs(await loadState(), openTabs);
+    await saveState(result.state);
+    for (const record of result.changed) {
+      nativeClient.send("CONVERSATION_UPSERT", { conversation: record });
+    }
+  });
   await Promise.all(
     tabs.map(async (tab) => {
       if (tab.id === undefined || tab.incognito) return;
