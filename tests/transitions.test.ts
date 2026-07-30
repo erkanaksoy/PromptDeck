@@ -15,8 +15,7 @@ const context = {
   tabId: 1,
   windowId: 10,
   isActive: false,
-  now: 2000,
-  persistPreview: false
+  now: 2000
 };
 
 describe("status transition reducer", () => {

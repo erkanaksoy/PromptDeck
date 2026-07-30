@@ -32,7 +32,7 @@ async function render(): Promise<void> {
     </dl>
     <button class="primary popup-primary" id="open-dashboard">Open Dashboard <span>→</span></button>
     <div class="popup-actions"><button id="rescan">↻ Rescan Tabs</button><button id="settings">⚙ Settings</button></div>
-    <p class="popup-footer">Local only · Previews ${response.state.settings.showMessagePreviews ? "on" : "off"}</p>
+    <p class="popup-footer">Local only · No external APIs</p>
   </main>`;
 }
 

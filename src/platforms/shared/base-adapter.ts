@@ -140,8 +140,7 @@ export abstract class BaseAdapter implements PlatformAdapter {
       isVisible: document.visibilityState === "visible" && document.hasFocus(),
       ...(assistant
         ? {
-            latestAssistantFingerprint: assistant.fingerprint,
-            latestAssistantPreview: assistant.text
+            latestAssistantFingerprint: assistant.fingerprint
           }
         : {}),
       waiting,

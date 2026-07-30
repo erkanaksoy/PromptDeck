@@ -12,8 +12,6 @@ export function record(overrides: Partial<ConversationRecord> = {}): Conversatio
     windowIds: [10],
     automaticStatus: "idle",
     isUnread: false,
-    labelIds: [],
-    previewStored: false,
     lastActivityAt: 1000,
     lastObservedAt: 1000,
     lastNotifiedEvents: [],

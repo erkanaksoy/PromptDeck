@@ -37,10 +37,8 @@ async function render(message = ""): Promise<void> {
           <option value="kanban"${selected(settings.defaultView, "kanban")}>Kanban</option>
         </select></label>
       </div></section>
-      <section class="settings-section"><div><h2>Privacy</h2><p>Previews are always plain text and off by default.</p></div><div class="settings-controls">
-        <label class="toggle-row"><span><strong>Show message previews</strong><small>Reveal short assistant excerpts in cards.</small></span><input id="showMessagePreviews" type="checkbox" ${settings.showMessagePreviews ? "checked" : ""}/></label>
-        <label class="toggle-row"><span><strong>Persist message previews</strong><small>Store short excerpts across Chrome restarts.</small></span><input id="persistMessagePreviews" type="checkbox" ${settings.persistMessagePreviews ? "checked" : ""}/></label>
-        <div class="button-row"><button data-command="CLEAR_PREVIEWS">Clear stored previews</button><button data-command="CLEAR_RECENT">Clear recent conversations</button><button class="danger" data-command="CLEAR_ALL_DATA">Clear all PromptDeck data</button></div>
+      <section class="settings-section"><div><h2>Local data</h2><p>Manage conversation status stored in Chrome.</p></div><div class="settings-controls">
+        <div class="button-row"><button data-command="CLEAR_RECENT">Clear recent conversations</button><button class="danger" data-command="CLEAR_ALL_DATA">Clear all PromptDeck data</button></div>
       </div></section>
       <section class="settings-section"><div><h2>Notifications</h2><p>Chrome controls final delivery and presentation.</p></div><div class="settings-controls">
         <label class="toggle-row"><span><strong>Generation finished</strong><small>Notify when a new response completes.</small></span><input id="notifyFinished" type="checkbox" ${settings.notifyFinished ? "checked" : ""}/></label>
@@ -91,12 +89,10 @@ root.addEventListener("click", (event) => {
   }
   const command = button.dataset.command;
   if (command === "CLEAR_ALL_DATA") {
-    if (!window.confirm("Clear all PromptDeck conversations, labels, settings, and recent items?")) return;
+    if (!window.confirm("Clear all PromptDeck conversations, settings, and recent items?")) return;
     void send({ type: "CLEAR_ALL_DATA" }).then(() => render("All local PromptDeck data cleared"));
-  } else if (command === "CLEAR_PREVIEWS" || command === "CLEAR_RECENT") {
-    void send({ type: command }).then(() =>
-      render(command === "CLEAR_PREVIEWS" ? "Stored previews cleared" : "Recent conversations cleared")
-    );
+  } else if (command === "CLEAR_RECENT") {
+    void send({ type: "CLEAR_RECENT" }).then(() => render("Recent conversations cleared"));
   }
 });
 

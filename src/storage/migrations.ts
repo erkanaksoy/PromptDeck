@@ -24,7 +24,6 @@ function isConversation(value: unknown): value is ConversationRecord {
     typeof value.title === "string" &&
     Array.isArray(value.openTabIds) &&
     Array.isArray(value.windowIds) &&
-    Array.isArray(value.labelIds) &&
     typeof value.lastActivityAt === "number"
   );
 }
@@ -39,17 +38,20 @@ export function migrateStoredState(raw: unknown): StoredState {
   const rawConversations = isRecord(raw.conversations) ? raw.conversations : {};
   for (const [key, value] of Object.entries(rawConversations)) {
     if (!isConversation(value)) continue;
+    const cleanValue = Object.fromEntries(
+      Object.entries(value).filter(
+        ([field]) => !["labelIds", "latestAssistantPreview", "previewStored"].includes(field)
+      )
+    ) as unknown as ConversationRecord;
     state.conversations[key] = {
-      ...value,
+      ...cleanValue,
       key,
       schemaVersion: SCHEMA_VERSION,
       openTabIds: [...new Set(value.openTabIds.filter(Number.isInteger))],
       windowIds: [...new Set(value.windowIds.filter(Number.isInteger))],
-      labelIds: [...new Set(value.labelIds)],
       lastNotifiedEvents: Array.isArray(value.lastNotifiedEvents)
         ? value.lastNotifiedEvents.filter((entry): entry is string => typeof entry === "string").slice(-30)
         : [],
-      previewStored: Boolean(value.previewStored),
       detectionAvailable: value.detectionAvailable !== false
     };
   }

@@ -4,13 +4,11 @@ import type {
   Filters,
   SortMode
 } from "../shared/types";
-import { LABELS } from "../shared/constants";
 
 export const EMPTY_FILTERS: Filters = {
   query: "",
   platforms: [],
   statuses: [],
-  labels: [],
   windows: [],
   unreadOnly: false,
   activeOnly: false,
@@ -58,8 +56,6 @@ export function sortConversations(
         return a.platform.localeCompare(b.platform) || byActivity(a, b);
       case "window":
         return (a.windowIds[0] ?? Infinity) - (b.windowIds[0] ?? Infinity) || byActivity(a, b);
-      case "label":
-        return (a.labelIds[0] ?? "zzz").localeCompare(b.labelIds[0] ?? "zzz") || byActivity(a, b);
       case "recently-closed":
         return (b.closedAt ?? 0) - (a.closedAt ?? 0) || byActivity(a, b);
     }
@@ -69,30 +65,19 @@ export function sortConversations(
 
 export function filterConversations(
   records: ConversationRecord[],
-  filters: Filters,
-  previewsEnabled = false
+  filters: Filters
 ): ConversationRecord[] {
   const query = filters.query.trim().toLowerCase();
   return records.filter((record) => {
     const status = displayStatus(record);
     if (filters.platforms.length && !filters.platforms.includes(record.platform)) return false;
     if (filters.statuses.length && !filters.statuses.includes(status)) return false;
-    if (filters.labels.length && !filters.labels.every((id) => record.labelIds.includes(id))) return false;
     if (filters.windows.length && !filters.windows.some((id) => record.windowIds.includes(id))) return false;
     if (filters.unreadOnly && !record.isUnread) return false;
     if (filters.activeOnly && !record.openTabIds.length) return false;
     if (filters.recentOnly && record.openTabIds.length > 0) return false;
     if (!query) return true;
-    const labelNames = LABELS
-      .filter((label) => record.labelIds.includes(label.id))
-      .map((label) => label.name)
-      .join(" ");
-    return [
-      record.title,
-      record.platform,
-      labelNames,
-      ...(previewsEnabled && record.latestAssistantPreview ? [record.latestAssistantPreview] : [])
-    ]
+    return [record.title, record.platform]
       .join(" ")
       .toLowerCase()
       .includes(query);

@@ -22,7 +22,6 @@ import { isExtensionRequest } from "../messaging/validators";
 import {
   clearAllData,
   clearRecent,
-  clearStoredPreviews,
   loadState,
   saveState,
   updateSettings
@@ -47,37 +46,15 @@ import {
 } from "./notification-manager";
 
 let stateQueue: Promise<unknown> = Promise.resolve();
-const SESSION_PREVIEWS_KEY = "promptdeck-session-previews";
 const queue = <T>(work: () => Promise<T>): Promise<T> => {
   const next = stateQueue.then(work, work);
   stateQueue = next.catch(() => undefined);
   return next;
 };
 
-async function loadSessionPreviews(): Promise<Record<string, string>> {
-  try {
-    const stored = await chrome.storage.session.get(SESSION_PREVIEWS_KEY);
-    const value = stored[SESSION_PREVIEWS_KEY];
-    return typeof value === "object" && value !== null
-      ? (value as Record<string, string>)
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-async function dashboardState(state: StoredState): Promise<DashboardState> {
-  const sessionPreviews = await loadSessionPreviews();
+function dashboardState(state: StoredState): DashboardState {
   return {
-    conversations: Object.values(state.conversations).map((record) =>
-      record.latestAssistantPreview || !sessionPreviews[record.key]
-        ? record
-        : {
-            ...record,
-            latestAssistantPreview: sessionPreviews[record.key],
-            previewStored: false
-          }
-    ),
+    conversations: Object.values(state.conversations),
     settings: state.settings,
     windowLabels: state.windowLabels,
     ...(state.migrationError ? { storageError: state.migrationError } : {})
@@ -181,20 +158,10 @@ async function processObservation(
       tabId,
       windowId,
       isActive: Boolean(tab?.active),
-      now: Date.now(),
-      persistPreview: state.settings.showMessagePreviews && state.settings.persistMessagePreviews
+      now: Date.now()
     });
     result.record.key = key;
     state.conversations[key] = result.record;
-    if (
-      state.settings.showMessagePreviews &&
-      !state.settings.persistMessagePreviews &&
-      request.payload.latestAssistantPreview
-    ) {
-      const previews = await loadSessionPreviews();
-      previews[key] = request.payload.latestAssistantPreview;
-      await chrome.storage.session.set({ [SESSION_PREVIEWS_KEY]: previews });
-    }
 
     for (const event of result.events) {
       const enabled =
@@ -291,8 +258,6 @@ async function registerUnavailableTab(tab: chrome.tabs.Tab): Promise<void> {
         windowIds: [],
         automaticStatus: "unknown",
         isUnread: false,
-        labelIds: [],
-        previewStored: false,
         lastActivityAt: now,
         lastObservedAt: now,
         lastNotifiedEvents: [],
@@ -342,7 +307,7 @@ async function handleRequest(
       case "GET_DASHBOARD_STATE": {
         const state = cleanupRecent(await loadState());
         await saveState(state);
-        return { ok: true, state: await dashboardState(state) };
+        return { ok: true, state: dashboardState(state) };
       }
       case "GET_VIEW_DELAY":
         return { ok: true, delayMs: (await loadState()).settings.markViewedDelayMs };
@@ -368,12 +333,6 @@ async function handleRequest(
             effectiveStatus(record) === "idle" ? "finished_unread" : record.automaticStatus
         }));
         return { ok: true };
-      case "SET_LABELS":
-        await patchConversation(request.conversationKey, (record) => ({
-          ...record,
-          labelIds: [...new Set(request.labelIds)]
-        }));
-        return { ok: true };
       case "SET_MANUAL_OVERRIDE":
         await patchConversation(request.conversationKey, (record) =>
           setManualOverride(record, request.value)
@@ -392,10 +351,6 @@ async function handleRequest(
         return { ok: true };
       case "UPDATE_SETTINGS":
         await updateSettings(request.patch as Partial<Settings>);
-        return { ok: true };
-      case "CLEAR_PREVIEWS":
-        await clearStoredPreviews();
-        await chrome.storage.session.remove(SESSION_PREVIEWS_KEY);
         return { ok: true };
       case "CLEAR_RECENT":
         await clearRecent();

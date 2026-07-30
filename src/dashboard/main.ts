@@ -1,6 +1,6 @@
 import "../styles/app.css";
 import { send } from "../shared/api";
-import { LABELS, PLATFORM_NAMES } from "../shared/constants";
+import { PLATFORM_NAMES } from "../shared/constants";
 import { applyTheme } from "../shared/theme";
 import { relativeTime } from "../shared/text";
 import type {
@@ -8,7 +8,6 @@ import type {
   DashboardState,
   DisplayStatus,
   Filters,
-  LabelId,
   Platform,
   SortMode
 } from "../shared/types";
@@ -25,7 +24,6 @@ const root: HTMLDivElement = rootElement;
 
 let state: DashboardState | null = null;
 let filters: Filters = structuredClone(EMPTY_FILTERS);
-let currentWindowId: number | undefined;
 let announce = "";
 
 const STATUS_META: Record<DisplayStatus, { name: string; icon: string }> = {
@@ -65,60 +63,21 @@ function statusBadge(record: ConversationRecord): string {
   </span>`;
 }
 
-function renderLabels(record: ConversationRecord): string {
-  if (!record.labelIds.length) return '<span class="muted small">No labels</span>';
-  return record.labelIds
-    .map((id) => {
-      const label = LABELS.find((candidate) => candidate.id === id);
-      return label
-        ? `<span class="label-chip label-${label.id}">${escapeText(label.name)}</span>`
-        : "";
-    })
-    .join("");
-}
-
-function labelEditor(record: ConversationRecord): string {
-  return `<fieldset class="label-editor">
-    <legend>Labels</legend>
-    ${LABELS.map(
-      (label) => `<label>
-        <input type="checkbox" data-label="${label.id}" data-key="${escapeText(record.key)}"
-          ${record.labelIds.includes(label.id) ? "checked" : ""} />
-        ${escapeText(label.name)}
-      </label>`
-    ).join("")}
-    <button class="text-button" data-action="clear-labels" data-key="${escapeText(record.key)}">Clear labels</button>
-  </fieldset>`;
-}
-
 function card(record: ConversationRecord): string {
   const status = displayStatus(record);
-  const host = new URL(record.canonicalUrl).hostname;
-  const windows = record.windowIds.length
-    ? record.windowIds
-        .map(
-          (id) =>
-            `${windowName(id)}${id === currentWindowId ? " · current" : ""}`
-        )
-        .join(", ")
-    : "Closed";
-  const preview =
-    state?.settings.showMessagePreviews && record.latestAssistantPreview
-      ? escapeText(record.latestAssistantPreview)
-      : state?.settings.showMessagePreviews
-        ? "No preview available"
-        : "Preview hidden";
   const unread = record.isUnread ? '<span class="attention-dot">Unread</span>' : "";
   const duplicate = record.openTabIds.length > 1 ? ` · ${record.openTabIds.length} tabs` : "";
 
   return `<article class="conversation-card card-${status}" data-key="${escapeText(record.key)}">
     <div class="card-stripe" aria-hidden="true"></div>
     <header class="card-header">
-      <span class="platform-mark platform-${record.platform}" aria-hidden="true">${record.platform === "chatgpt" ? "C" : record.platform === "claude" ? "A" : "G"}</span>
-      <div class="card-heading">
-        <span class="eyebrow">${escapeText(PLATFORM_NAMES[record.platform])}${duplicate}</span>
-        <h3>${escapeText(record.title)}</h3>
-      </div>
+      <button class="card-focus" data-action="open" data-key="${escapeText(record.key)}" aria-label="${record.openTabIds.length ? "Focus" : "Reopen"} ${escapeText(record.title)}">
+        <span class="platform-mark platform-${record.platform}" aria-hidden="true">${record.platform === "chatgpt" ? "C" : record.platform === "claude" ? "A" : "G"}</span>
+        <span class="card-heading">
+          <span class="eyebrow">${escapeText(PLATFORM_NAMES[record.platform])}${duplicate}</span>
+          <span class="card-title">${escapeText(record.title)}</span>
+        </span>
+      </button>
       <details class="card-menu">
         <summary aria-label="Conversation actions">•••</summary>
         <div class="menu-panel">
@@ -133,19 +92,8 @@ function card(record: ConversationRecord): string {
       </details>
     </header>
     <div class="status-row">${statusBadge(record)} ${unread}</div>
-    <p class="preview">${preview}</p>
-    <div class="label-row">${renderLabels(record)}</div>
-    <details class="labels-disclosure">
-      <summary>Assign labels</summary>
-      ${labelEditor(record)}
-    </details>
-    <dl class="card-meta">
-      <div><dt>Window</dt><dd>${escapeText(windows)}</dd></div>
-      <div><dt>Activity</dt><dd title="${new Date(record.lastActivityAt).toLocaleString()}">${relativeTime(record.lastActivityAt)}</dd></div>
-      <div><dt>Host</dt><dd>${escapeText(host)}</dd></div>
-    </dl>
+    <p class="card-activity" title="${new Date(record.lastActivityAt).toLocaleString()}"><span>Activity</span> ${relativeTime(record.lastActivityAt)}</p>
     ${!record.detectionAvailable ? `<p class="detection-note">Detection unavailable. The page may be loading or its structure may have changed.</p>` : ""}
-    <button class="primary card-open" data-action="open" data-key="${escapeText(record.key)}">${record.openTabIds.length ? "Focus conversation" : "Reopen conversation"} <span aria-hidden="true">→</span></button>
   </article>`;
 }
 
@@ -154,8 +102,8 @@ function statusCount(status: DisplayStatus): number {
 }
 
 function filterChip(
-  kind: "platform" | "status" | "label",
-  value: Platform | DisplayStatus | LabelId,
+  kind: "platform" | "status",
+  value: Platform | DisplayStatus,
   label: string,
   active: boolean
 ): string {
@@ -167,7 +115,7 @@ function renderToolbar(records: ConversationRecord[]): string {
   return `<section class="control-panel" aria-label="Filters and sorting">
     <div class="search-sort-row">
       <label class="search-field"><span class="sr-only">Search conversations</span>
-        <input id="search" type="search" placeholder="Search title, platform, or label…" value="${escapeText(filters.query)}" />
+        <input id="search" type="search" placeholder="Search title or platform…" value="${escapeText(filters.query)}" />
       </label>
       <label>Sort
         <select id="sort">
@@ -181,7 +129,6 @@ function renderToolbar(records: ConversationRecord[]): string {
             ["title-desc", "Title Z–A"],
             ["platform", "Platform"],
             ["window", "Browser window"],
-            ["label", "Manual label"],
             ["recently-closed", "Recently closed"]
           ]
             .map(([value, label]) => option(value!, label!, state?.settings.sortMode === value))
@@ -209,11 +156,6 @@ function renderToolbar(records: ConversationRecord[]): string {
             filterChip("status", status, STATUS_META[status].name, filters.statuses.includes(status))
           )
           .join("")}
-      </div>
-      <div class="chip-group" aria-label="Label filters">
-        ${LABELS.map((label) =>
-          filterChip("label", label.id, label.name, filters.labels.includes(label.id))
-        ).join("")}
       </div>
       <label class="check-pill"><input id="unread-only" type="checkbox" ${filters.unreadOnly ? "checked" : ""}/> Unread only</label>
       <label class="check-pill"><input id="active-only" type="checkbox" ${filters.activeOnly ? "checked" : ""}/> Active only</label>
@@ -258,8 +200,7 @@ function render(): void {
   applyTheme(state.settings.theme);
   const filtered = filterConversations(
     state.conversations,
-    filters,
-    state.settings.showMessagePreviews
+    filters
   );
   const records = sortConversations(filtered, state.settings.sortMode);
   const noSupported = state.conversations.length === 0;
@@ -293,7 +234,7 @@ function render(): void {
       ${state.storageError ? `<div class="banner error-banner" role="alert">${escapeText(state.storageError)}</div>` : ""}
       ${firstRun ? `<section class="welcome-panel">
         <div><span class="eyebrow">Welcome to PromptDeck</span><h1>All your AI conversations, one calm view.</h1>
-        <p>PromptDeck only watches open ChatGPT, Claude, and Gemini tabs. Everything stays on this device, and message previews are hidden by default.</p></div>
+        <p>PromptDeck only watches open ChatGPT, Claude, and Gemini tabs. Everything stays on this device.</p></div>
         <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a><button class="text-button" id="hide-welcome">Hide</button></div>
       </section>` : ""}
       <section class="summary" aria-label="Conversation summary">
@@ -342,7 +283,6 @@ root.addEventListener("click", (event) => {
     if (actionName === "idle" && key) void action({ type: "SET_MANUAL_OVERRIDE", conversationKey: key, value: "idle" }, "Idle status set");
     if (actionName === "clear-override" && key) void action({ type: "CLEAR_MANUAL_OVERRIDE", conversationKey: key }, "Automatic status restored");
     if (actionName === "remove-recent" && key) void action({ type: "REMOVE_RECENT", conversationKey: key }, "Removed from Recent");
-    if (actionName === "clear-labels" && key) void action({ type: "SET_LABELS", conversationKey: key, labelIds: [] }, "Labels cleared");
     if (actionName === "copy" && actionable?.dataset.url) {
       void navigator.clipboard.writeText(actionable.dataset.url).then(() => {
         announce = "Conversation URL copied";
@@ -371,14 +311,6 @@ root.addEventListener("click", (event) => {
     filters.statuses = filters.statuses.includes(value)
       ? filters.statuses.filter((item) => item !== value)
       : [...filters.statuses, value];
-    render();
-    return;
-  }
-  if (filterButton?.dataset.filterKind === "label") {
-    const value = filterButton.dataset.filterValue as LabelId;
-    filters.labels = filters.labels.includes(value)
-      ? filters.labels.filter((item) => item !== value)
-      : [...filters.labels, value];
     render();
     return;
   }
@@ -440,22 +372,8 @@ root.addEventListener("change", (event) => {
     filters.recentOnly = (target as HTMLInputElement).checked;
     if (filters.recentOnly) filters.activeOnly = false;
     render();
-  } else if (target.matches("[data-label]")) {
-    const checkbox = target as HTMLInputElement;
-    const key = checkbox.dataset.key;
-    const record = state?.conversations.find((candidate) => candidate.key === key);
-    if (key && record) {
-      const label = checkbox.dataset.label as LabelId;
-      const labelIds = checkbox.checked
-        ? [...new Set([...record.labelIds, label])]
-        : record.labelIds.filter((id) => id !== label);
-      void action({ type: "SET_LABELS", conversationKey: key, labelIds }, "Labels updated");
-    }
   }
 });
 
 chrome.storage.onChanged.addListener(() => void load());
-void chrome.windows.getCurrent().then((window) => {
-  currentWindowId = window.id;
-  void load();
-});
+void load();

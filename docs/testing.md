@@ -1,6 +1,6 @@
 # Manual test plan
 
-Record Chrome version, PromptDeck build hash, operating system, and test date. Start with previews and persistence off.
+Record Chrome version, PromptDeck build hash, operating system, and test date.
 
 ## Installation and static checks
 
@@ -12,17 +12,17 @@ Record Chrome version, PromptDeck build hash, operating system, and test date. S
 
 ## First run and general UI
 
-- Confirm the concise welcome panel, local-only explanation, hidden-preview note, scan button, and settings link.
+- Confirm the concise welcome panel, local-only explanation, scan button, settings link, and hide action.
 - Confirm no supported tabs, no matching filters, loading, Detection unavailable, empty Recent, and storage failure presentations.
 - Toggle Grid/Kanban and reload; confirm persistence and no card movement animation.
 - Toggle Light, Dark, and System. Zoom to 200%, navigate by keyboard, inspect visible focus, open/close details menus with keyboard, and test reduced-motion mode.
 - Exercise every filter alone and in combination, every sort mode, Reset Filters, and result counts.
-- Assign multiple labels, remove one, clear all, filter by label, and verify labels on Recent records.
 - Exercise every card command: open, copy URL, read/unread, Waiting, Idle, clear override, reopen Recent, remove Recent.
+- Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
 
 ## ChatGPT
 
-- Open an existing conversation and confirm one card with title, host, and window.
+- Open an existing conversation and confirm one compact card with title, status, and activity.
 - Start generation; confirm Generating.
 - Switch away; complete generation; confirm one completion notification and unread.
 - Return to the tab; after the configured stabilization delay confirm read/Idle.
@@ -61,7 +61,7 @@ Repeat the full ChatGPT sequence with a Gemini conversation:
 - Close the final copy. Confirm one Recent record.
 - Open the same conversation in two normal windows. Confirm both window labels and correct focus behavior.
 - Confirm each window filter and sort.
-- Restart Chrome. Confirm labels, settings, unread state, and Recent survive.
+- Restart Chrome. Confirm settings, unread state, and Recent survive.
 - Stop/restart the service worker from `chrome://extensions`; confirm no duplicate notifications.
 - Restore a Chrome session with duplicate tabs; confirm reconciliation.
 - Navigate between conversations using each platform’s SPA UI; confirm the old record becomes Recent only if no other tab remains and the new record does not inherit fingerprints.
@@ -69,11 +69,9 @@ Repeat the full ChatGPT sequence with a Gemini conversation:
 
 ## Privacy and settings
 
-- With previews off, confirm every card says Preview hidden and storage has no preview.
-- Enable Show previews only; confirm excerpts appear during observation but do not survive restart.
-- Enable Persist previews; confirm only a short sanitized plain-text excerpt is stored.
-- Verify code is reduced to `[code]`, whitespace is normalized, and page HTML cannot execute.
-- Clear stored previews, clear Recent, and clear all data; verify each scope.
+- Confirm cards and settings expose no assistant-response previews.
+- Inspect local storage and confirm assistant-response excerpts are not stored.
+- Clear Recent and clear all data; verify each scope.
 - Toggle all three notification categories independently.
 - Confirm “Suppress finished while visible” suppresses only finished, not Waiting or Error.
 - Change focus delay and verify acknowledgement timing.

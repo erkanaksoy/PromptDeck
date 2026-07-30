@@ -38,7 +38,7 @@ describe("storage migrations", () => {
   it("uses safe defaults for corrupted data", () => {
     const state = migrateStoredState({ schemaVersion: 1, conversations: "bad", settings: null });
     expect(state.conversations).toEqual({});
-    expect(state.settings.showMessagePreviews).toBe(false);
+    expect(state.settings.theme).toBe("system");
   });
 
   it("drops corrupted records but keeps valid records", () => {
@@ -48,6 +48,29 @@ describe("storage migrations", () => {
       settings: {}
     });
     expect(Object.keys(state.conversations)).toEqual(["good"]);
+  });
+
+  it("removes obsolete preview and label data", () => {
+    const legacyRecord = {
+      ...record(),
+      labelIds: ["urgent"],
+      latestAssistantPreview: "Stored response text",
+      previewStored: true
+    };
+    const state = migrateStoredState({
+      schemaVersion: 1,
+      conversations: { legacy: legacyRecord },
+      settings: {
+        showMessagePreviews: true,
+        persistMessagePreviews: true
+      }
+    });
+    const migrated = state.conversations.legacy as unknown as Record<string, unknown>;
+    expect(migrated.labelIds).toBeUndefined();
+    expect(migrated.latestAssistantPreview).toBeUndefined();
+    expect(migrated.previewStored).toBeUndefined();
+    expect(state.settings).not.toHaveProperty("showMessagePreviews");
+    expect(state.settings).not.toHaveProperty("persistMessagePreviews");
   });
 
   it("falls back on an unsupported schema", () => {

@@ -14,7 +14,6 @@ const records = [
     platform: "claude",
     automaticStatus: "error",
     isUnread: true,
-    labelIds: ["urgent"],
     windowIds: [11],
     lastActivityAt: 30
   }),
@@ -23,7 +22,6 @@ const records = [
     title: "Beta",
     platform: "gemini",
     automaticStatus: "waiting",
-    labelIds: ["work", "review"],
     lastActivityAt: 20
   })
 ];
@@ -60,29 +58,19 @@ describe("sorting", () => {
 });
 
 describe("combined filtering", () => {
-  it("combines platform, status, window, label, and unread", () => {
+  it("combines platform, status, window, and unread", () => {
     const result = filterConversations(records, {
       ...EMPTY_FILTERS,
       platforms: ["claude"],
       statuses: ["error"],
-      labels: ["urgent"],
       windows: [11],
       unreadOnly: true
     });
     expect(result.map((item) => item.key)).toEqual(["error"]);
   });
 
-  it("requires all selected labels", () => {
-    expect(
-      filterConversations(records, {
-        ...EMPTY_FILTERS,
-        labels: ["work", "review"]
-      }).map((item) => item.key)
-    ).toEqual(["waiting"]);
-  });
-
-  it("searches title, platform, and labels", () => {
-    expect(filterConversations(records, { ...EMPTY_FILTERS, query: "urgent" })[0]?.key).toBe(
+  it("searches title and platform", () => {
+    expect(filterConversations(records, { ...EMPTY_FILTERS, query: "claude" })[0]?.key).toBe(
       "error"
     );
   });

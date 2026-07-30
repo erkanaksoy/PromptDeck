@@ -6,12 +6,12 @@ const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) throw new Error("Diagnostics root missing");
 
 const states = [
-  ["generating", "↻", "Generating", "Streaming markers and stop control detected."],
-  ["finished_unread", "●", "Finished / Unread", "A new completed response was observed off-tab."],
-  ["waiting", "?", "Waiting for Input", "Explicit confirmation request detected."],
-  ["error", "!", "Error", "A platform error banner was detected."],
-  ["idle", "✓", "Idle", "The latest response has been viewed."],
-  ["recent", "◷", "Recent", "The original tab is closed and retained for 7 days."]
+  ["generating", "↻", "Generating"],
+  ["finished_unread", "●", "Finished / Unread"],
+  ["waiting", "?", "Waiting for Input"],
+  ["error", "!", "Error"],
+  ["idle", "✓", "Idle"],
+  ["recent", "◷", "Recent"]
 ];
 
 root.innerHTML = `<div class="app-shell diagnostics-shell">
@@ -21,12 +21,10 @@ root.innerHTML = `<div class="app-shell diagnostics-shell">
     <div class="diagnostic-controls"><button id="toggle-theme">Toggle dark theme</button><button id="toggle-view">Toggle layout</button></div>
     <section id="diagnostic-grid" class="card-grid">${states
       .map(
-        ([status, icon, name, detail], index) => `<article class="conversation-card card-${status}">
-          <div class="card-stripe"></div><header class="card-header"><span class="platform-mark platform-${index % 3 === 0 ? "chatgpt" : index % 3 === 1 ? "claude" : "gemini"}">${index % 3 === 0 ? "C" : index % 3 === 1 ? "A" : "G"}</span><div class="card-heading"><span class="eyebrow">Fixture ${index + 1}</span><h3>${name} conversation</h3></div></header>
+        ([status, icon, name], index) => `<article class="conversation-card card-${status}">
+          <div class="card-stripe"></div><header class="card-header"><button class="card-focus"><span class="platform-mark platform-${index % 3 === 0 ? "chatgpt" : index % 3 === 1 ? "claude" : "gemini"}">${index % 3 === 0 ? "C" : index % 3 === 1 ? "A" : "G"}</span><span class="card-heading"><span class="eyebrow">Fixture ${index + 1}</span><span class="card-title">${name} conversation</span></span></button></header>
           <div class="status-row"><span class="status-badge status-${status}"><span>${icon}</span> ${name}</span></div>
-          <p class="preview">${detail}</p><div class="label-row"><span class="label-chip label-work">Work</span><span class="label-chip label-review">Review</span></div>
-          <dl class="card-meta"><div><dt>Window</dt><dd>Window 1</dd></div><div><dt>Activity</dt><dd>just now</dd></div><div><dt>Host</dt><dd>fixture.local</dd></div></dl>
-          <button class="primary card-open">Focus conversation →</button>
+          <p class="card-activity"><span>Activity</span> just now</p>
         </article>`
       )
       .join("")}</section>

@@ -1,6 +1,5 @@
 import type {
   DashboardState,
-  LabelId,
   Settings,
   TabObservation
 } from "../shared/types";
@@ -14,7 +13,6 @@ export type ExtensionRequest =
   | { type: "FOCUS_CONVERSATION"; conversationKey: string }
   | { type: "MARK_READ"; conversationKey: string }
   | { type: "MARK_UNREAD"; conversationKey: string }
-  | { type: "SET_LABELS"; conversationKey: string; labelIds: LabelId[] }
   | {
       type: "SET_MANUAL_OVERRIDE";
       conversationKey: string;
@@ -23,7 +21,6 @@ export type ExtensionRequest =
   | { type: "CLEAR_MANUAL_OVERRIDE"; conversationKey: string }
   | { type: "REMOVE_RECENT"; conversationKey: string }
   | { type: "UPDATE_SETTINGS"; patch: Partial<Settings> }
-  | { type: "CLEAR_PREVIEWS" }
   | { type: "CLEAR_RECENT" }
   | { type: "CLEAR_ALL_DATA" }
   | { type: "PROMPTDECK_RESCAN" };

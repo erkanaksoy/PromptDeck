@@ -8,15 +8,6 @@ export type AutomaticStatus =
   | "unknown";
 export type DisplayStatus = AutomaticStatus | "recent";
 export type Confidence = "high" | "medium" | "low";
-export type LabelId =
-  | "work"
-  | "research"
-  | "coding"
-  | "personal"
-  | "urgent"
-  | "review"
-  | "parked"
-  | "done";
 export type Theme = "light" | "dark" | "system";
 export type ViewMode = "grid" | "kanban";
 export type SortMode =
@@ -29,7 +20,6 @@ export type SortMode =
   | "title-desc"
   | "platform"
   | "window"
-  | "label"
   | "recently-closed";
 
 export interface DetectedError {
@@ -71,10 +61,7 @@ export interface ConversationRecord {
   waitingConfidence?: Confidence;
   waitingReasons?: string[];
   manualStatusOverride?: ManualStatusOverride;
-  labelIds: LabelId[];
   latestAssistantFingerprint?: string;
-  latestAssistantPreview?: string;
-  previewStored: boolean;
   lastActivityAt: number;
   lastObservedAt: number;
   generationStartedAt?: number;
@@ -98,7 +85,6 @@ export interface TabObservation {
   isGenerating: boolean;
   isVisible: boolean;
   latestAssistantFingerprint?: string;
-  latestAssistantPreview?: string;
   waiting: WaitingDetection;
   error?: DetectedError;
   observedAt: number;
@@ -108,8 +94,6 @@ export interface TabObservation {
 
 export interface Settings {
   theme: Theme;
-  showMessagePreviews: boolean;
-  persistMessagePreviews: boolean;
   notifyFinished: boolean;
   notifyWaiting: boolean;
   notifyError: boolean;
@@ -141,16 +125,8 @@ export interface Filters {
   query: string;
   platforms: Platform[];
   statuses: DisplayStatus[];
-  labels: LabelId[];
   windows: number[];
   unreadOnly: boolean;
   activeOnly: boolean;
   recentOnly: boolean;
-}
-
-export interface LabelDefinition {
-  id: LabelId;
-  name: string;
-  color: string;
-  darkColor: string;
 }

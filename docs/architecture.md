@@ -38,13 +38,13 @@ The priority order is Error, Generating, Waiting, Finished / Unread, Idle, Unkno
 
 Notifications are created only from reducer transition events. The event key includes an assistant or error fingerprint, and the most recent keys are stored with the conversation. Restoring a worker or refreshing a tab cannot recreate an already recorded notification.
 
-Manual Waiting and Idle overrides are bound to the current assistant fingerprint. A different fingerprint clears that override. Labels are organizational and persist until removed.
+Manual Waiting and Idle overrides are bound to the current assistant fingerprint. A different fingerprint clears that override.
 
 ## Storage and migrations
 
 One `promptdeck-state` value in `chrome.storage.local` contains schema version 1, records, settings, window labels, and the next session label. The migration entry point validates the outer shape and every conversation. Invalid records are dropped; unknown schemas reset to safe defaults with a user-visible migration message.
 
-Previews are omitted unless explicit settings authorize persistence. Data clear operations are centralized in the repository.
+Assistant response excerpts are never stored. Data clear operations are centralized in the repository.
 
 ## Performance
 

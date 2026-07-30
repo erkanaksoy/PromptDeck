@@ -17,13 +17,12 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 - Status-colored conversation cards: green Finished, yellow Waiting, red Error, and slate-blue Idle.
 - Dismissible first-run welcome panel and a sticky dashboard header.
 - Seven-day Recent retention after the last open copy of a conversation closes.
-- Predefined multi-label organization: Work, Research, Coding, Personal, Urgent, Review, Parked, and Done.
-- Combined platform, status, label, window, unread, and text filters.
-- Deterministic sorting by attention, status, unread, activity, title, platform, window, label, or close time.
-- Manual read/unread, Waiting, Idle, label, copy URL, reopen, and Recent-removal actions.
+- Combined platform, status, window, unread, and text filters.
+- Deterministic sorting by attention, status, unread, activity, title, platform, window, or close time.
+- Compact cards with clickable conversation headers and activity metadata.
+- Manual read/unread, Waiting, Idle, copy URL, reopen, and Recent-removal actions.
 - Local Chrome notifications for finished generation, Waiting, and Error transitions with fingerprint-based deduplication.
 - Light, dark, and system themes.
-- Message previews hidden and not persisted by default.
 - Manual rescan and safe content-script recovery.
 - Offline diagnostics page and fixture-driven tests.
 
@@ -51,19 +50,17 @@ Waiting detection is a transparent local heuristic. It examines the last one or 
 
 All PromptDeck data stays in `chrome.storage.local` on this Chrome installation. The extension only inspects rendered page text and status controls on the three supported origins.
 
-- Conversation previews are hidden by default.
-- Preview persistence is off by default.
-- Only a bounded plain-text excerpt is kept when both preview settings allow it.
+- Assistant response excerpts are never stored.
 - Fingerprints are lightweight local hashes; full conversations are never stored.
 - Notification bodies contain platform, title, and event only.
 - PromptDeck does not read cookies, credentials, authentication tokens, platform localStorage, request headers, or inaccessible/hidden reasoning.
-- The settings page can clear previews, Recent items, or all local PromptDeck data.
+- The settings page can clear Recent items or all local PromptDeck data.
 - No external fonts, scripts, styles, API calls, telemetry, or analytics are present.
 
 ## Permissions
 
 - `tabs`: enumerate supported tabs in every normal window, match URLs, focus the correct tab/window, and avoid duplicate dashboard tabs.
-- `storage`: persist the versioned local schema, labels, unread state, settings, fingerprints, and Recent records.
+- `storage`: persist the versioned local schema, unread state, settings, fingerprints, and Recent records.
 - `notifications`: show the three user-configurable local Chrome notification categories.
 - `alarms`: perform MV3-compatible Recent cleanup every six hours.
 - `scripting`: safely reinject the packaged content script during a manual recovery scan when it is missing.
@@ -128,7 +125,7 @@ public/             MV3 manifest and local icons
 - Window labels are stable for the current Chrome session. Chrome window IDs are not treated as durable across full browser restarts.
 - Recent retention is fixed at exactly seven days; cleanup occurs on startup, dashboard reads, and a six-hour alarm.
 - Content updates are MutationObserver-driven and debounced. A low-frequency two-second URL heartbeat only detects SPA routes that do not emit `popstate`; it does not rescan content continuously.
-- Preview text is used transiently for local detection. It is written to storage only when both **Show message previews** and **Persist message previews** are enabled.
+- Rendered response text is examined transiently for local status detection and is never stored.
 
 ## Security model
 
@@ -145,7 +142,6 @@ Each site’s selectors live in `src/platforms/<platform>/selectors.ts`. See [do
 - **Detection unavailable:** let the page finish loading, click **Rescan Tabs**, then inspect the offline diagnostics page and adapter selector notes. A current platform DOM change may require selector maintenance.
 - **No notification:** verify both PromptDeck’s toggle and Chrome/OS notification permissions. Chrome may suppress notifications based on system policy.
 - **Duplicate dashboard tab:** close older developer builds; dashboard deduplication is scoped to the currently installed extension ID.
-- **A preview is missing:** enable **Show message previews**. To retain it after restart, also enable **Persist message previews**.
 - **A closed chat disappeared:** Recent is intentionally deleted after seven days or when explicitly removed.
 
 ## Known limitations

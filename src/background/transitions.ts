@@ -10,7 +10,6 @@ export interface TransitionContext {
   windowId: number;
   isActive: boolean;
   now: number;
-  persistPreview: boolean;
 }
 
 export interface TransitionResult {
@@ -30,8 +29,6 @@ function baseRecord(observation: TabObservation, context: TransitionContext): Co
     windowIds: [context.windowId],
     automaticStatus: observation.automaticStatus,
     isUnread: false,
-    labelIds: [],
-    previewStored: false,
     lastActivityAt: observation.observedAt,
     lastObservedAt: observation.observedAt,
     lastNotifiedEvents: [],
@@ -115,9 +112,6 @@ export function reduceObservation(
     ...(observation.latestAssistantFingerprint
       ? { latestAssistantFingerprint: observation.latestAssistantFingerprint }
       : {}),
-    ...(context.persistPreview && observation.latestAssistantPreview
-      ? { latestAssistantPreview: observation.latestAssistantPreview, previewStored: true }
-      : { previewStored: false, latestAssistantPreview: undefined }),
     lastActivityAt:
       observation.isGenerating || hasNewResponse || observation.error
         ? observation.observedAt

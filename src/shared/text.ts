@@ -1,10 +1,10 @@
-import { PREVIEW_MAX_LENGTH } from "./constants";
+const DEFAULT_TEXT_LIMIT = 360;
 
 export function normalizeWhitespace(value: string): string {
   return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ").trim();
 }
 
-export function sanitizePlainText(value: string, maxLength = PREVIEW_MAX_LENGTH): string {
+export function sanitizePlainText(value: string, maxLength = DEFAULT_TEXT_LIMIT): string {
   const withoutCode = value
     .replace(/```[\s\S]*?```/g, " [code] ")
     .replace(/`[^`\n]+`/g, " [code] ")

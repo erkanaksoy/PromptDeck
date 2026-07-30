@@ -33,18 +33,6 @@ export async function updateSettings(patch: Partial<Settings>): Promise<StoredSt
   return updateState((state) => ({ ...state, settings: { ...state.settings, ...patch } }));
 }
 
-export async function clearStoredPreviews(): Promise<void> {
-  await updateState((state) => {
-    const conversations = Object.fromEntries(
-      Object.entries(state.conversations).map(([key, value]) => [
-        key,
-        { ...value, latestAssistantPreview: undefined, previewStored: false }
-      ])
-    );
-    return { ...state, conversations };
-  });
-}
-
 export async function clearRecent(): Promise<void> {
   await updateState((state) => ({
     ...state,
