@@ -153,4 +153,40 @@ describe("authoritative tab reconciliation", () => {
     expect(first.changed).toEqual([]);
     expect(second.changed).toEqual([]);
   });
+
+  it("removes legacy aggregate records for pages without conversation IDs", () => {
+    const state = createDefaultState();
+    state.conversations.legacy = record({
+      key: "gemini:https://gemini.google.com/app",
+      platform: "gemini",
+      conversationId: undefined,
+      canonicalUrl: "https://gemini.google.com/app"
+    });
+
+    const result = reconcileOpenTabs(
+      state,
+      [{ conversationKey: "tab:gemini:7", tabId: 7, windowId: 20 }],
+      5000
+    );
+
+    expect(result.state.conversations.legacy).toBeUndefined();
+    expect(result.removedKeys).toEqual(["legacy"]);
+  });
+
+  it("removes a closed tab-scoped placeholder instead of adding it to Recent", () => {
+    const state = createDefaultState();
+    state.conversations.temporary = record({
+      key: "tab:gemini:7",
+      platform: "gemini",
+      conversationId: undefined,
+      canonicalUrl: "https://gemini.google.com/app",
+      openTabIds: [7],
+      primaryTabId: 7
+    });
+
+    const result = reconcileOpenTabs(state, [], 5000);
+
+    expect(result.state.conversations.temporary).toBeUndefined();
+    expect(result.removedKeys).toEqual(["temporary"]);
+  });
 });

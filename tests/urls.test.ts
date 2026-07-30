@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  conversationKeyForTab,
   getConversationId,
+  isTabScopedConversationKey,
   normalizeConversationUrl,
   platformForUrl
 } from "../src/shared/urls";
@@ -31,5 +33,25 @@ describe("URL normalization", () => {
     expect(normalizeConversationUrl("http://chatgpt.com/c/a")).toBeNull();
     expect(platformForUrl("https://chatgpt.com.evil.example/c/a")).toBeNull();
     expect(normalizeConversationUrl("javascript:alert(1)")).toBeNull();
+  });
+
+  it("uses tab-scoped keys until a conversation ID exists", () => {
+    const temporary = conversationKeyForTab(
+      "gemini",
+      "https://gemini.google.com/app",
+      null,
+      42
+    );
+    const stable = conversationKeyForTab(
+      "gemini",
+      "https://gemini.google.com/app/abc",
+      "abc",
+      42
+    );
+
+    expect(temporary).toBe("tab:gemini:42");
+    expect(isTabScopedConversationKey(temporary)).toBe(true);
+    expect(stable).toBe("gemini:abc");
+    expect(isTabScopedConversationKey(stable)).toBe(false);
   });
 });

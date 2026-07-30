@@ -5,7 +5,7 @@ import {
 import { lightweightHash } from "../shared/fingerprint";
 import { PLATFORM_NAMES } from "../shared/constants";
 import {
-  conversationKey,
+  conversationKeyForTab,
   getConversationId,
   isSafeConversationUrl,
   normalizeConversationUrl,
@@ -158,18 +158,29 @@ async function processObservation(
   await queue(async () => {
     const state = await loadState();
     await ensureWindowLabel(state, windowId);
-    const key = conversationKey(
+    const key = conversationKeyForTab(
       request.payload.platform,
       request.payload.canonicalUrl,
-      request.payload.conversationId
+      request.payload.conversationId,
+      tabId
     );
     const priorForTab = findConversationByTab(state.conversations, tabId);
     if (priorForTab && priorForTab.key !== key) {
-      const windows = new Map<number, number>();
-      for (const otherTab of await chrome.tabs.query({})) {
-        if (otherTab.id !== undefined) windows.set(otherTab.id, otherTab.windowId);
+      if (!priorForTab.conversationId) {
+        delete state.conversations[priorForTab.key];
+        nativeClient.send("CONVERSATION_REMOVE", {
+          conversationKey: priorForTab.key,
+          removedAt: Date.now()
+        });
+      } else {
+        const windows = new Map<number, number>();
+        for (const otherTab of await chrome.tabs.query({})) {
+          if (otherTab.id !== undefined) windows.set(otherTab.id, otherTab.windowId);
+        }
+        const detached = detachTab(priorForTab, tabId, windows);
+        state.conversations[priorForTab.key] = detached;
+        nativeClient.send("CONVERSATION_UPSERT", { conversation: detached });
       }
-      state.conversations[priorForTab.key] = detachTab(priorForTab, tabId, windows);
     }
 
     const tab = await chrome.tabs.get(tabId).catch(() => sender.tab);
@@ -236,10 +247,11 @@ async function rescanTabs(): Promise<number> {
     const canonicalUrl = normalizeConversationUrl(tab.url);
     if (!platform || !canonicalUrl) continue;
     openTabs.push({
-      conversationKey: conversationKey(
+      conversationKey: conversationKeyForTab(
         platform,
         canonicalUrl,
-        getConversationId(platform, canonicalUrl)
+        getConversationId(platform, canonicalUrl),
+        tab.id
       ),
       tabId: tab.id,
       windowId: tab.windowId
@@ -250,6 +262,9 @@ async function rescanTabs(): Promise<number> {
     await saveState(result.state);
     for (const record of result.changed) {
       nativeClient.send("CONVERSATION_UPSERT", { conversation: record });
+    }
+    for (const conversationKey of result.removedKeys) {
+      nativeClient.send("CONVERSATION_REMOVE", { conversationKey, removedAt: Date.now() });
     }
   });
   await Promise.all(
@@ -279,7 +294,7 @@ async function registerUnavailableTab(tab: chrome.tabs.Tab): Promise<void> {
   const canonicalUrl = normalizeConversationUrl(tab.url);
   if (!platform || !canonicalUrl) return;
   const conversationId = getConversationId(platform, canonicalUrl);
-  const key = conversationKey(platform, canonicalUrl, conversationId);
+  const key = conversationKeyForTab(platform, canonicalUrl, conversationId, tabId);
   await queue(async () => {
     const state = await loadState();
     await ensureWindowLabel(state, tab.windowId);

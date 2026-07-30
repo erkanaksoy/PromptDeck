@@ -10,6 +10,7 @@ export interface OpenConversationTab {
 export interface ReconciledOpenTabs {
   state: StoredState;
   changed: ConversationRecord[];
+  removedKeys: string[];
 }
 
 function sameNumbers(left: number[], right: number[]): boolean {
@@ -34,8 +35,14 @@ export function reconcileOpenTabs(
 
   const conversations = { ...state.conversations };
   const changed: ConversationRecord[] = [];
+  const removedKeys: string[] = [];
   for (const [key, record] of Object.entries(state.conversations)) {
     const group = tabsByConversation.get(key);
+    if (!group && !record.conversationId) {
+      delete conversations[key];
+      removedKeys.push(key);
+      continue;
+    }
     const openTabIds = group ? [...group.tabIds].sort((a, b) => a - b) : [];
     const windowIds = group ? [...group.windowIds].sort((a, b) => a - b) : [];
     const primaryTabId = openTabIds[0];
@@ -73,7 +80,8 @@ export function reconcileOpenTabs(
 
   return {
     state: { ...state, conversations },
-    changed
+    changed,
+    removedKeys
   };
 }
 

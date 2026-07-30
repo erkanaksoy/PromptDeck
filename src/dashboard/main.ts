@@ -265,6 +265,13 @@ function render(): void {
   const noSupported = state.conversations.length === 0;
   const firstRun = !state.settings.firstRunComplete;
   const filtersActive = JSON.stringify(filters) !== JSON.stringify(EMPTY_FILTERS);
+  const activeConversationCount = state.conversations.filter(
+    (record) => record.openTabIds.length
+  ).length;
+  const openTabCount = state.conversations.reduce(
+    (count, record) => count + record.openTabIds.length,
+    0
+  );
 
   root.innerHTML = `<div class="app-shell">
     <header class="topbar">
@@ -290,7 +297,7 @@ function render(): void {
         <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a></div>
       </section>` : ""}
       <section class="summary" aria-label="Conversation summary">
-        <div class="summary-intro"><span class="eyebrow">Attention overview</span><h1>${state.conversations.filter((record) => record.openTabIds.length).length} active conversation${state.conversations.filter((record) => record.openTabIds.length).length === 1 ? "" : "s"}</h1><p>Across ChatGPT, Claude, and Gemini</p></div>
+        <div class="summary-intro"><span class="eyebrow">Attention overview</span><h1>${activeConversationCount} active conversation${activeConversationCount === 1 ? "" : "s"}</h1><p>${openTabCount} open AI tab${openTabCount === 1 ? "" : "s"} across ChatGPT, Claude, and Gemini</p></div>
         ${(["error", "waiting", "finished_unread", "generating", "idle", "recent"] as DisplayStatus[])
           .map((status) => `<button class="summary-stat stat-${status}" data-filter-summary="${status}">
             <span class="stat-icon" aria-hidden="true">${STATUS_META[status].icon}</span>

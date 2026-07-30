@@ -62,6 +62,19 @@ export function conversationKey(platform: Platform, raw: string, id?: string | n
   return `${platform}:${id || normalized}`;
 }
 
+export function conversationKeyForTab(
+  platform: Platform,
+  raw: string,
+  id: string | null | undefined,
+  tabId: number
+): string {
+  return id ? conversationKey(platform, raw, id) : `tab:${platform}:${tabId}`;
+}
+
+export function isTabScopedConversationKey(key: string): boolean {
+  return key.startsWith("tab:");
+}
+
 export function isSafeConversationUrl(raw: string): boolean {
   return normalizeConversationUrl(raw) !== null;
 }
