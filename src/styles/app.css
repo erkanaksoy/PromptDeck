@@ -368,7 +368,7 @@ button:hover,
 }
 
 .sidepanel-filter {
-  --status-color: var(--accent);
+  --status-color: var(--focus);
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -378,7 +378,7 @@ button:hover,
   border-color: color-mix(in srgb, var(--status-color) 58%, var(--border));
   border-radius: 8px;
   color: var(--status-color);
-  background: color-mix(in srgb, var(--status-color) 10%, var(--surface));
+  background: color-mix(in srgb, var(--status-color) 18%, var(--surface));
   font-size: 0.65rem;
   font-weight: 750;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 4%);
@@ -403,9 +403,13 @@ button:hover,
 .sidepanel-filter.active {
   border-color: var(--status-color);
   color: var(--text);
-  background: color-mix(in srgb, var(--status-color) 28%, var(--surface));
+  background: color-mix(in srgb, var(--status-color) 38%, var(--surface));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--status-color) 35%, transparent);
 }
+
+.sidepanel-filter.sidebar-status-error { --status-color: var(--error); }
+.sidepanel-filter.sidebar-status-waiting { --status-color: var(--waiting); }
+.sidepanel-filter.sidebar-status-generating { --status-color: var(--generating); }
 
 .sidepanel-filter-icon {
   width: 18px;
