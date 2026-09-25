@@ -86,7 +86,9 @@ function filterButton(status: SidePanelQuickFilter, label: string, count: number
 function providerFilterButton(provider: Platform, count: number): string {
   const active = providerFilters.has(provider);
   return `<button class="sidepanel-filter sidepanel-provider-filter sidebar-platform-${provider}${active ? " active" : ""}"
-    data-provider-filter="${provider}" aria-pressed="${active}"><img class="sidepanel-provider-filter-icon" src="${providerFaviconUrl(provider)}" alt="" width="14" height="14" />${escapeText(PLATFORM_NAMES[provider])}<strong>${count}</strong></button>`;
+    data-provider-filter="${provider}" aria-pressed="${active}"
+    aria-label="${escapeText(PLATFORM_NAMES[provider])}, ${count} conversation${count === 1 ? "" : "s"}"
+    title="${escapeText(PLATFORM_NAMES[provider])} · ${count}"><img class="sidepanel-provider-filter-icon" src="${providerFaviconUrl(provider, 64)}" alt="" width="26" height="26" /></button>`;
 }
 
 function groupButton(mode: SidePanelGroupMode, label: string): string {
@@ -186,8 +188,8 @@ async function render(): Promise<void> {
         </div>
       </div>
       <div class="sidepanel-filter-row">
-        <span>Provider</span><div class="sidepanel-filters" aria-label="Provider filters">
-          <button class="sidepanel-filter${providerFilters.size === 0 ? " active" : ""}" data-provider-filter="all" aria-pressed="${providerFilters.size === 0}">All<strong>${statusScopedItems.length}</strong></button>
+        <span>Provider</span><div class="sidepanel-filters sidepanel-provider-options" aria-label="Provider filters">
+          <button class="sidepanel-filter sidepanel-provider-all${providerFilters.size === 0 ? " active" : ""}" data-provider-filter="all" aria-pressed="${providerFilters.size === 0}" aria-label="All providers, ${statusScopedItems.length} conversations" title="All providers · ${statusScopedItems.length}">ALL</button>
           ${providerFilterButton("chatgpt", providerCount("chatgpt"))}
           ${providerFilterButton("claude", providerCount("claude"))}
           ${providerFilterButton("gemini", providerCount("gemini"))}
