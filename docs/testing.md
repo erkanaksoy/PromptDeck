@@ -21,7 +21,7 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
 - Confirm the left sidebar lists every open AI tab, including duplicate tabs for one conversation, and each entry focuses the exact selected tab.
 - Confirm each sidebar row shows the provider favicon, then a separate status icon; outlines follow provider colors while titles and status icons follow conversation status.
-- Click the PromptDeck toolbar icon and confirm its explicit action handler opens the Side Panel on New Tab, ChatGPT, Claude, and Gemini; close it between checks.
+- Click the PromptDeck toolbar icon and confirm Chrome's native `openPanelOnActionClick` behavior opens the Side Panel on New Tab, ChatGPT, Claude, and Gemini; close it between checks.
 - Switch to an unrelated website or another `chrome://` page and confirm PromptDeck closes and is absent from the Side Panel menu; switch back to an allowed tab and confirm its prior open state returns.
 - Keep the Side Panel open while switching among New Tab and supported LLM tabs; confirm the same panel instance stays open and the active AI conversation highlight updates as focus changes.
 - Open duplicate copies of one conversation and confirm the Side Panel collapses them into one row with the correct tab count.

@@ -1,6 +1,6 @@
 {
   "name": "promptdeck",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "private": true,
   "type": "module",
   "description": "Local-only attention dashboard for ChatGPT, Claude, and Gemini tabs.",
