@@ -7,6 +7,7 @@ import { displayStatus, sortConversations } from "../dashboard/state";
 const rootElement = document.querySelector<HTMLDivElement>("#app");
 if (!rootElement) throw new Error("Side panel root missing");
 const root: HTMLDivElement = rootElement;
+let placementOpen = false;
 
 const STATUS_META: Record<DisplayStatus, { name: string; icon: string }> = {
   generating: { name: "Generating", icon: "↻" },
@@ -38,8 +39,20 @@ function entry(record: ConversationRecord, tabId: number): string {
   </button>`;
 }
 
+async function currentPanelSide(): Promise<"left" | "right" | null> {
+  try {
+    if (typeof chrome.sidePanel.getLayout !== "function") return null;
+    return (await chrome.sidePanel.getLayout()).side;
+  } catch {
+    return null;
+  }
+}
+
 async function render(): Promise<void> {
-  const response = await send({ type: "GET_DASHBOARD_STATE" });
+  const [response, panelSide] = await Promise.all([
+    send({ type: "GET_DASHBOARD_STATE" }),
+    currentPanelSide()
+  ]);
   if (!response.ok || !response.state) {
     root.innerHTML = '<main class="sidepanel-shell"><p class="sidepanel-empty">PromptDeck is unavailable.</p></main>';
     return;
@@ -60,9 +73,15 @@ async function render(): Promise<void> {
       <div class="sidepanel-actions">
         <button id="sidepanel-rescan" title="Rescan tabs" aria-label="Rescan tabs">↻</button>
         <button id="sidepanel-dashboard" title="Open dashboard" aria-label="Open dashboard">▦</button>
+        <button id="sidepanel-placement" title="Side panel position" aria-label="Side panel position" aria-expanded="${placementOpen}">⇆</button>
         <button id="sidepanel-settings" title="Open settings" aria-label="Open settings">⚙</button>
       </div>
     </header>
+    ${placementOpen ? `<section class="sidepanel-placement">
+      <div><strong>Side panel position</strong><span>${panelSide ? `Currently ${panelSide}` : "Managed by Chrome"}</span></div>
+      <p>Chrome applies this position to every side panel.</p>
+      <button id="sidepanel-placement-settings">Choose left or right in Chrome settings</button>
+    </section>` : ""}
     <nav class="sidepanel-list" aria-label="Open AI tabs">
       ${openTabs.length
         ? openTabs.map(({ record, tabId }) => entry(record, tabId)).join("")
@@ -89,6 +108,14 @@ root.addEventListener("click", (event) => {
     void send({ type: "RESCAN_TABS" }).then(() => window.setTimeout(() => void render(), 600));
   } else if (button.id === "sidepanel-dashboard") {
     void send({ type: "OPEN_DASHBOARD" });
+  } else if (button.id === "sidepanel-placement") {
+    placementOpen = !placementOpen;
+    void render();
+  } else if (button.id === "sidepanel-placement-settings") {
+    void chrome.tabs.create({ url: "chrome://settings/appearance" }).catch(() => {
+      const status = root.querySelector<HTMLElement>(".sidepanel-status");
+      if (status) status.textContent = "Open Chrome Settings → Appearance → Side panel.";
+    });
   } else if (button.id === "sidepanel-settings") {
     void chrome.runtime.openOptionsPage();
   }

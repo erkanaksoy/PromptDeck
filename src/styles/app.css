@@ -327,6 +327,44 @@ button:hover,
   padding: 9px;
 }
 
+.sidepanel-placement {
+  display: grid;
+  gap: 8px;
+  margin: 9px 9px 0;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.sidepanel-placement > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sidepanel-placement strong {
+  font-size: 0.78rem;
+}
+
+.sidepanel-placement span,
+.sidepanel-placement p {
+  color: var(--muted);
+  font-size: 0.66rem;
+}
+
+.sidepanel-placement p {
+  margin: 0;
+}
+
+.sidepanel-placement button {
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  font-size: 0.7rem;
+}
+
 .sidepanel-entry {
   min-height: 42px;
 }

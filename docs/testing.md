@@ -23,6 +23,7 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Confirm sidebar outlines follow provider colors while each title and status icon follow the current conversation status.
 - Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on any active browser tab.
 - Keep the Side Panel open while switching between ordinary sites and supported AI tabs; confirm the list stays visible and each entry focuses its exact tab.
+- Open the Side Panel position control, confirm it reports the current side on Chrome 140+, and verify its button opens Chrome Settings → Appearance.
 
 ## ChatGPT
 
