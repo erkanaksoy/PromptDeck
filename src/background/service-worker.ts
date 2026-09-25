@@ -56,6 +56,7 @@ const queue = <T>(work: () => Promise<T>): Promise<T> => {
 };
 
 async function configureSidePanelForTab(tabId: number, url: string | undefined): Promise<void> {
+  if (!url) return;
   const enabled = isPromptDeckSidePanelUrl(url);
   await chrome.sidePanel.setOptions(enabled
     ? { tabId, enabled: true }
@@ -63,8 +64,8 @@ async function configureSidePanelForTab(tabId: number, url: string | undefined):
 }
 
 async function configureSidePanel(): Promise<void> {
-  await chrome.sidePanel.setOptions({ path: "sidepanel.html", enabled: false });
-  await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  await chrome.sidePanel.setOptions({ path: "sidepanel.html", enabled: true });
+  await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false });
   const tabs = await chrome.tabs.query({});
   await Promise.allSettled(tabs.map((tab) => tab.id === undefined
     ? Promise.resolve()
@@ -110,6 +111,16 @@ async function toggleSidePanel(): Promise<void> {
   }
   await chrome.sidePanel.open({ windowId: window.id });
   await setSidePanelWindowOpen(window.id, true);
+}
+
+async function openSidePanelFromAction(tab: chrome.tabs.Tab): Promise<void> {
+  if (
+    tab.id === undefined ||
+    !isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)
+  ) return;
+  await configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl);
+  await chrome.sidePanel.open({ windowId: tab.windowId });
+  await setSidePanelWindowOpen(tab.windowId, true);
 }
 
 function dashboardState(state: StoredState): DashboardState {
@@ -513,6 +524,10 @@ chrome.sidePanel.onClosed.addListener((info) => {
 
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-side-panel") void toggleSidePanel();
+});
+
+chrome.action.onClicked.addListener((tab) => {
+  void openSidePanelFromAction(tab).catch(() => undefined);
 });
 
 chrome.windows.onRemoved.addListener((windowId) => {

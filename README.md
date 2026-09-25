@@ -82,7 +82,7 @@ The Chrome API choices follow the official [Tabs](https://developer.chrome.com/d
 3. Enable **Developer mode**.
 4. Click **Load unpacked**.
 5. Select the repository’s `dist` directory.
-6. Pin PromptDeck if desired. Click its toolbar icon, then **Open Dashboard**.
+6. Pin PromptDeck if desired. On New Tab or a supported LLM tab, click its toolbar icon to open the Side Panel.
 
 Reload the extension from `chrome://extensions` after rebuilding.
 
