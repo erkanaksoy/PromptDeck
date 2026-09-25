@@ -14,7 +14,7 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 - One deduplicated record per platform conversation, even when it is open in multiple tabs.
 - Grid and independently scrollable Kanban views.
 - Compact left sidebar listing every open AI tab; each entry focuses its exact browser tab.
-- Sidebar titles and icons use status colors, while entry outlines identify ChatGPT, Claude, or Gemini.
+- Sidebar rows show the provider favicon followed by a separate status icon; titles use status colors while entry outlines identify ChatGPT, Claude, or Gemini.
 - Browser-wide Chrome Side Panel for the same compact tab list while browsing any site.
 - Side Panel position control showing the current side and linking directly to Chrome's global left/right setting.
 - Automatic states: Generating, Finished / Unread, Waiting for Input, Error, Idle, and Detection unavailable.

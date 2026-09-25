@@ -20,7 +20,7 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Exercise every card command: open, copy URL, read/unread, Waiting, Idle, clear override, reopen Recent, remove Recent.
 - Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
 - Confirm the left sidebar lists every open AI tab, including duplicate tabs for one conversation, and each entry focuses the exact selected tab.
-- Confirm sidebar outlines follow provider colors while each title and status icon follow the current conversation status.
+- Confirm each sidebar row shows the provider favicon, then a separate status icon; outlines follow provider colors while titles and status icons follow conversation status.
 - Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on any active browser tab.
 - Keep the Side Panel open while switching between ordinary sites and supported AI tabs; confirm the list stays visible and each entry focuses its exact tab.
 - Open the Side Panel position control, confirm it reports the current side on Chrome 140+, and verify its button opens Chrome Settings → Appearance.

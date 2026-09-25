@@ -1,5 +1,7 @@
 import "../styles/app.css";
 import { send } from "../shared/api";
+import { PLATFORM_NAMES } from "../shared/constants";
+import { providerFaviconUrl } from "../shared/favicon";
 import { applyTheme } from "../shared/theme";
 import type { ConversationRecord, DisplayStatus } from "../shared/types";
 import { displayStatus, sortConversations } from "../dashboard/state";
@@ -33,7 +35,8 @@ function entry(record: ConversationRecord, tabId: number): string {
   const meta = STATUS_META[status];
   return `<button class="tab-sidebar-entry sidepanel-entry sidebar-platform-${record.platform} sidebar-status-${status}"
     data-tab-id="${tabId}" title="${escapeText(record.title)} — ${escapeText(meta.name)}"
-    aria-label="Focus ${escapeText(record.title)}. Status: ${escapeText(meta.name)}">
+    aria-label="Focus ${escapeText(PLATFORM_NAMES[record.platform])} chat ${escapeText(record.title)}. Status: ${escapeText(meta.name)}">
+    <img class="tab-sidebar-provider" src="${providerFaviconUrl(record.platform)}" alt="" width="22" height="22" />
     <span class="tab-sidebar-status" aria-hidden="true">${meta.icon}</span>
     <span class="tab-sidebar-name">${escapeText(record.title)}</span>
   </button>`;
