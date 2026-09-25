@@ -22,7 +22,8 @@ export interface SidePanelGroup {
 export function buildSidePanelItems(
   records: ConversationRecord[],
   activeTabId: number | undefined,
-  filters: ReadonlySet<SidePanelQuickFilter>
+  filters: ReadonlySet<SidePanelQuickFilter>,
+  providers: ReadonlySet<Platform> = new Set()
 ): SidePanelItem[] {
   return sortConversations(
     records.filter((record) => record.openTabIds.length > 0),
@@ -43,7 +44,10 @@ export function buildSidePanelItems(
         isCurrent
       };
     })
-    .filter((item) => filters.size === 0 || filters.has(item.status as SidePanelQuickFilter));
+    .filter((item) =>
+      (filters.size === 0 || filters.has(item.status as SidePanelQuickFilter)) &&
+      (providers.size === 0 || providers.has(item.record.platform))
+    );
 }
 
 export function groupSidePanelItems(

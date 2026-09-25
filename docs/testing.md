@@ -24,7 +24,7 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on any active browser tab.
 - Keep the Side Panel open while switching between ordinary sites and supported AI tabs; confirm the active AI conversation is highlighted and updates as focus changes.
 - Open duplicate copies of one conversation and confirm the Side Panel collapses them into one row with the correct tab count.
-- Exercise Error, Waiting, and Generating filters alone and together, then group the visible rows by Provider and Status.
+- Exercise Error, Waiting, and Generating filters alone and together; repeat with the matching ChatGPT, Claude, and Gemini provider filters, then group the visible rows by Provider and Status.
 - With focus in the Side Panel list, use Up/Down to move through visible rows and Enter to focus the selected conversation tab.
 - Open the Side Panel position control, confirm it reports the current side on Chrome 140+, and verify its button opens Chrome Settings → Appearance.
 - Press `Ctrl+Shift+Y` (`Command+Shift+Y` on macOS) repeatedly and confirm it opens and closes PromptDeck in the focused Chrome window; customize it at `chrome://extensions/shortcuts` and retest.

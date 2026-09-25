@@ -43,4 +43,14 @@ describe("side panel list state", () => {
       "generating"
     ]);
   });
+
+  it("combines provider and status filters", () => {
+    const items = buildSidePanelItems([
+      record({ key: "chatgpt:error", automaticStatus: "error" }),
+      record({ key: "claude:error", platform: "claude", automaticStatus: "error", openTabIds: [2] }),
+      record({ key: "claude:waiting", platform: "claude", automaticStatus: "waiting", openTabIds: [3] })
+    ], undefined, new Set(["error"]), new Set(["claude"]));
+
+    expect(items.map((item) => item.record.key)).toEqual(["claude:error"]);
+  });
 });

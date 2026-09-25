@@ -353,6 +353,20 @@ button:hover,
   display: none;
 }
 
+.sidepanel-filter-row {
+  display: grid;
+  gap: 4px;
+}
+
+.sidepanel-filter-row > span,
+.sidepanel-group-control > span {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .sidepanel-filter {
   --status-color: var(--accent);
   flex: 0 0 auto;
@@ -382,6 +396,10 @@ button:hover,
   background: color-mix(in srgb, var(--status-color) 12%, var(--surface));
 }
 
+.sidepanel-provider-filter {
+  --status-color: var(--provider-color);
+}
+
 .sidepanel-group-control {
   display: flex;
   align-items: center;
@@ -391,12 +409,13 @@ button:hover,
   font-size: 0.65rem;
 }
 
-.sidepanel-group-control select {
-  width: auto;
-  min-width: 94px;
-  padding: 5px 26px 5px 8px;
-  border-radius: 8px;
-  font-size: 0.68rem;
+.sidepanel-group-options {
+  display: flex;
+  gap: 5px;
+}
+
+.sidepanel-group-options .sidepanel-filter {
+  padding-inline: 8px;
 }
 
 .sidepanel-group-section,

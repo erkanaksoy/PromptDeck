@@ -20,6 +20,7 @@ let groupMode: SidePanelGroupMode = "none";
 let selectedConversationKey: string | null = null;
 let renderSequence = 0;
 const quickFilters = new Set<SidePanelQuickFilter>();
+const providerFilters = new Set<Platform>();
 const GROUP_MODE_KEY = "promptdeck-side-panel-group-mode";
 
 const STATUS_META: Record<DisplayStatus, { name: string; icon: string }> = {
@@ -82,6 +83,18 @@ function filterButton(status: SidePanelQuickFilter, label: string, count: number
     data-sidepanel-filter="${status}" aria-pressed="${active}">${label}<strong>${count}</strong></button>`;
 }
 
+function providerFilterButton(provider: Platform, count: number): string {
+  const active = providerFilters.has(provider);
+  return `<button class="sidepanel-filter sidepanel-provider-filter sidebar-platform-${provider}${active ? " active" : ""}"
+    data-provider-filter="${provider}" aria-pressed="${active}">${escapeText(PLATFORM_NAMES[provider])}<strong>${count}</strong></button>`;
+}
+
+function groupButton(mode: SidePanelGroupMode, label: string): string {
+  const active = groupMode === mode;
+  return `<button class="sidepanel-filter${active ? " active" : ""}" data-group-mode="${mode}"
+    aria-pressed="${active}">${label}</button>`;
+}
+
 async function activeTabId(): Promise<number | undefined> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab?.id;
@@ -120,12 +133,30 @@ async function render(): Promise<void> {
 
   applyTheme(response.state.settings.theme);
   const allItems = buildSidePanelItems(response.state.conversations, currentTabId, new Set());
-  const visibleItems = buildSidePanelItems(response.state.conversations, currentTabId, quickFilters);
+  const providerScopedItems = buildSidePanelItems(
+    response.state.conversations,
+    currentTabId,
+    new Set(),
+    providerFilters
+  );
+  const statusScopedItems = buildSidePanelItems(
+    response.state.conversations,
+    currentTabId,
+    quickFilters
+  );
+  const visibleItems = buildSidePanelItems(
+    response.state.conversations,
+    currentTabId,
+    quickFilters,
+    providerFilters
+  );
   if (!visibleItems.some((item) => item.record.key === selectedConversationKey)) {
     selectedConversationKey = visibleItems.find((item) => item.isCurrent)?.record.key ?? visibleItems[0]?.record.key ?? null;
   }
   const statusCount = (status: SidePanelQuickFilter): number =>
-    allItems.filter((item) => item.status === status).length;
+    providerScopedItems.filter((item) => item.status === status).length;
+  const providerCount = (provider: Platform): number =>
+    statusScopedItems.filter((item) => item.record.platform === provider).length;
 
   root.innerHTML = `<main class="sidepanel-shell">
     <header class="sidepanel-header">
@@ -146,17 +177,27 @@ async function render(): Promise<void> {
       <button id="sidepanel-placement-settings">Choose left or right in Chrome settings</button>
     </section>` : ""}
     <section class="sidepanel-tools" aria-label="Conversation list controls">
-      <div class="sidepanel-filters" aria-label="Status filters">
-        <button class="sidepanel-filter${quickFilters.size === 0 ? " active" : ""}" data-sidepanel-filter="all" aria-pressed="${quickFilters.size === 0}">All<strong>${allItems.length}</strong></button>
-        ${filterButton("error", "Error", statusCount("error"))}
-        ${filterButton("waiting", "Waiting", statusCount("waiting"))}
-        ${filterButton("generating", "Generating", statusCount("generating"))}
+      <div class="sidepanel-filter-row">
+        <span>Status</span><div class="sidepanel-filters" aria-label="Status filters">
+          <button class="sidepanel-filter${quickFilters.size === 0 ? " active" : ""}" data-sidepanel-filter="all" aria-pressed="${quickFilters.size === 0}">All<strong>${providerScopedItems.length}</strong></button>
+          ${filterButton("error", "Error", statusCount("error"))}
+          ${filterButton("waiting", "Waiting", statusCount("waiting"))}
+          ${filterButton("generating", "Generating", statusCount("generating"))}
+        </div>
       </div>
-      <label class="sidepanel-group-control"><span>Group</span><select id="sidepanel-group-mode">
-        <option value="none" ${groupMode === "none" ? "selected" : ""}>None</option>
-        <option value="provider" ${groupMode === "provider" ? "selected" : ""}>Provider</option>
-        <option value="status" ${groupMode === "status" ? "selected" : ""}>Status</option>
-      </select></label>
+      <div class="sidepanel-filter-row">
+        <span>Provider</span><div class="sidepanel-filters" aria-label="Provider filters">
+          <button class="sidepanel-filter${providerFilters.size === 0 ? " active" : ""}" data-provider-filter="all" aria-pressed="${providerFilters.size === 0}">All<strong>${statusScopedItems.length}</strong></button>
+          ${providerFilterButton("chatgpt", providerCount("chatgpt"))}
+          ${providerFilterButton("claude", providerCount("claude"))}
+          ${providerFilterButton("gemini", providerCount("gemini"))}
+        </div>
+      </div>
+      <div class="sidepanel-group-control"><span>Group</span><div class="sidepanel-group-options" aria-label="Grouping mode">
+        ${groupButton("none", "None")}
+        ${groupButton("provider", "Provider")}
+        ${groupButton("status", "Status")}
+      </div></div>
     </section>
     <nav class="sidepanel-list" aria-label="Open AI tabs">
       ${visibleItems.length
@@ -196,6 +237,18 @@ root.addEventListener("click", (event) => {
     else if (quickFilters.has(filter)) quickFilters.delete(filter);
     else quickFilters.add(filter);
     void render();
+  } else if (button.dataset.providerFilter) {
+    const provider = button.dataset.providerFilter as Platform | "all";
+    if (provider === "all") providerFilters.clear();
+    else if (providerFilters.has(provider)) providerFilters.delete(provider);
+    else providerFilters.add(provider);
+    void render();
+  } else if (button.dataset.groupMode) {
+    const mode = button.dataset.groupMode as SidePanelGroupMode;
+    if (mode !== "none" && mode !== "provider" && mode !== "status") return;
+    groupMode = mode;
+    void chrome.storage.local.set({ [GROUP_MODE_KEY]: mode });
+    void render();
   } else if (button.id === "sidepanel-rescan") {
     void send({ type: "RESCAN_TABS" }).then(() => window.setTimeout(() => void render(), 600));
   } else if (button.id === "sidepanel-dashboard") {
@@ -216,16 +269,6 @@ root.addEventListener("click", (event) => {
   } else if (button.id === "sidepanel-settings") {
     void chrome.runtime.openOptionsPage();
   }
-});
-
-root.addEventListener("change", (event) => {
-  const select = event.target as HTMLSelectElement;
-  if (select.id !== "sidepanel-group-mode") return;
-  const value = select.value;
-  if (value !== "none" && value !== "provider" && value !== "status") return;
-  groupMode = value;
-  void chrome.storage.local.set({ [GROUP_MODE_KEY]: value });
-  void render();
 });
 
 document.addEventListener("keydown", (event) => {
