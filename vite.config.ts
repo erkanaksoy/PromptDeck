@@ -8,6 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dashboard: resolve(__dirname, "dashboard.html"),
+        sidepanel: resolve(__dirname, "sidepanel.html"),
         popup: resolve(__dirname, "popup.html"),
         options: resolve(__dirname, "options.html"),
         diagnostics: resolve(__dirname, "diagnostics.html")

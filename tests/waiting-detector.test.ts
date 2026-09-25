@@ -8,7 +8,7 @@ describe("waiting-for-user heuristic", () => {
     ["file upload", "Before I can continue, please upload the file."],
     ["logs", "Can you provide the error log?"],
     ["option", "Which option do you prefer? A or B?"]
-  ])("detects explicit %s requests", (_name, text) => {
+  ])("detects explicit %s requests", (_name: string, text: string) => {
     const result = detectWaitingForUser(text);
     expect(result.waiting).toBe(true);
     expect(["medium", "high"]).toContain(result.confidence);
@@ -21,7 +21,7 @@ describe("waiting-for-user heuristic", () => {
     ["code question", "```ts\nconst answer = value ? one : two;\n```"],
     ["optional offer", "If you'd like, I can provide more examples."],
     ["plain explanation", "The build is complete and all checks pass."]
-  ])("does not detect %s", (_name, text) => {
+  ])("does not detect %s", (_name: string, text: string) => {
     expect(detectWaitingForUser(text).waiting).toBe(false);
   });
 });

@@ -21,6 +21,8 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
 - Confirm the left sidebar lists every open AI tab, including duplicate tabs for one conversation, and each entry focuses the exact selected tab.
 - Confirm sidebar outlines follow provider colors while each title and status icon follow the current conversation status.
+- Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on any active browser tab.
+- Keep the Side Panel open while switching between ordinary sites and supported AI tabs; confirm the list stays visible and each entry focuses its exact tab.
 
 ## ChatGPT
 

@@ -42,7 +42,8 @@ await cp(resolve(root, "README.md"), resolve(dist, "README.md"));
 const manifest = JSON.parse(await readFile(resolve(dist, "manifest.json"), "utf8"));
 const required = [
   manifest.background.service_worker,
-  manifest.action.default_popup,
+  manifest.side_panel.default_path,
+  ...(manifest.action.default_popup ? [manifest.action.default_popup] : []),
   manifest.options_page,
   manifest.content_scripts[0].js[0],
   ...Object.values(manifest.icons)

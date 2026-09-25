@@ -52,6 +52,10 @@ const queue = <T>(work: () => Promise<T>): Promise<T> => {
   return next;
 };
 
+function configureSidePanel(): void {
+  void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+}
+
 function dashboardState(state: StoredState): DashboardState {
   return {
     conversations: Object.values(state.conversations),
@@ -429,6 +433,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onInstalled.addListener((details) => {
+  configureSidePanel();
   void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
   void chrome.alarms.create(RECENT_CLEANUP_ALARM, { periodInMinutes: 360 });
   void rescanTabs();
@@ -436,6 +441,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.runtime.onStartup.addListener(() => {
+  configureSidePanel();
   void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
   void chrome.alarms.create(RECENT_CLEANUP_ALARM, { periodInMinutes: 360 });
   void rescanTabs();
@@ -444,4 +450,5 @@ chrome.runtime.onStartup.addListener(() => {
 
 void chrome.alarms.create(RECENT_CLEANUP_ALARM, { periodInMinutes: 360 });
 void chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+configureSidePanel();
 void rescanTabs();
