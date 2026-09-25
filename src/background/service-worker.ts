@@ -55,12 +55,15 @@ const queue = <T>(work: () => Promise<T>): Promise<T> => {
   return next;
 };
 
-async function configureSidePanelForTab(tabId: number, url: string | undefined): Promise<void> {
-  if (!url) return;
-  const enabled = isPromptDeckSidePanelUrl(url);
-  await chrome.sidePanel.setOptions(enabled
-    ? { tabId, enabled: true }
-    : { tabId, enabled: false });
+async function configureActionForTab(tabId: number, url: string | undefined): Promise<void> {
+  if (isPromptDeckSidePanelUrl(url)) await chrome.action.enable(tabId);
+  else await chrome.action.disable(tabId);
+}
+
+async function hideSidePanelForUnsupportedTab(tab: chrome.tabs.Tab): Promise<void> {
+  if (isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)) return;
+  await chrome.sidePanel.close({ windowId: tab.windowId }).catch(() => undefined);
+  await setSidePanelWindowOpen(tab.windowId, false);
 }
 
 async function configureSidePanel(): Promise<void> {
@@ -69,7 +72,7 @@ async function configureSidePanel(): Promise<void> {
   const tabs = await chrome.tabs.query({});
   await Promise.allSettled(tabs.map((tab) => tab.id === undefined
     ? Promise.resolve()
-    : configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl)));
+    : configureActionForTab(tab.id, tab.url ?? tab.pendingUrl)));
 }
 
 async function openSidePanelWindows(): Promise<Set<number>> {
@@ -97,7 +100,6 @@ async function toggleSidePanel(): Promise<void> {
   if (window.id === undefined) return;
   const [tab] = await chrome.tabs.query({ active: true, windowId: window.id });
   if (tab?.id === undefined || !isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)) return;
-  await configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl);
   await sidePanelStateQueue;
   const openWindows = await openSidePanelWindows();
   if (openWindows.has(window.id)) {
@@ -467,20 +469,24 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 
 chrome.tabs.onCreated.addListener((tab) => {
   if (tab.id !== undefined) {
-    void configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl).catch(() => undefined);
+    void configureActionForTab(tab.id, tab.url ?? tab.pendingUrl).catch(() => undefined);
   }
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (!changeInfo.url && changeInfo.status !== "loading") return;
-  void configureSidePanelForTab(tabId, changeInfo.url ?? tab.url ?? tab.pendingUrl)
-    .catch(() => undefined);
+  const url = changeInfo.url ?? tab.url ?? tab.pendingUrl;
+  void configureActionForTab(tabId, url).catch(() => undefined);
+  if (tab.active && !isPromptDeckSidePanelUrl(url)) {
+    void hideSidePanelForUnsupportedTab(tab);
+  }
 });
 
 chrome.tabs.onActivated.addListener(({ tabId }) => {
-  void chrome.tabs.get(tabId).then((tab) =>
-    configureSidePanelForTab(tabId, tab.url ?? tab.pendingUrl)
-  ).catch(() => undefined);
+  void chrome.tabs.get(tabId).then(async (tab) => {
+    await configureActionForTab(tabId, tab.url ?? tab.pendingUrl);
+    await hideSidePanelForUnsupportedTab(tab);
+  }).catch(() => undefined);
   void chrome.tabs.sendMessage(tabId, { type: "PROMPTDECK_RESCAN" }).catch(() => undefined);
 });
 

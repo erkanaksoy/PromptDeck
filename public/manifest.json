@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "PromptDeck",
-  "version": "1.8.4",
+  "version": "1.9.0",
   "description": "A local-only attention dashboard for ChatGPT, Claude, and Gemini conversations.",
   "minimum_chrome_version": "142",
   "permissions": ["tabs", "storage", "notifications", "alarms", "scripting", "sidePanel", "favicon"],
