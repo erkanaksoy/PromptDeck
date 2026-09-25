@@ -189,7 +189,6 @@ async function render(): Promise<void> {
       </div>
       <div class="sidepanel-filter-row">
         <span>Provider</span><div class="sidepanel-filters sidepanel-provider-options" aria-label="Provider filters">
-          <button class="sidepanel-filter sidepanel-provider-all${providerFilters.size === 0 ? " active" : ""}" data-provider-filter="all" aria-pressed="${providerFilters.size === 0}" aria-label="All providers, ${statusScopedItems.length} conversations" title="All providers · ${statusScopedItems.length}">ALL</button>
           ${providerFilterButton("chatgpt", providerCount("chatgpt"))}
           ${providerFilterButton("claude", providerCount("claude"))}
           ${providerFilterButton("gemini", providerCount("gemini"))}
@@ -240,9 +239,8 @@ root.addEventListener("click", (event) => {
     else quickFilters.add(filter);
     void render();
   } else if (button.dataset.providerFilter) {
-    const provider = button.dataset.providerFilter as Platform | "all";
-    if (provider === "all") providerFilters.clear();
-    else if (providerFilters.has(provider)) providerFilters.delete(provider);
+    const provider = button.dataset.providerFilter as Platform;
+    if (providerFilters.has(provider)) providerFilters.delete(provider);
     else providerFilters.add(provider);
     void render();
   } else if (button.dataset.groupMode) {

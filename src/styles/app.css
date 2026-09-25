@@ -440,11 +440,6 @@ button:hover,
   padding: 6px;
 }
 
-.sidepanel-provider-all {
-  font-size: 0.72rem;
-  letter-spacing: 0.07em;
-}
-
 .sidepanel-provider-filter-icon {
   width: 26px;
   height: 26px;
@@ -457,7 +452,9 @@ button:hover,
   gap: 8px;
   margin-top: 9px;
   padding-top: 12px;
+  padding-bottom: 12px;
   border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   color: var(--muted);
   font-size: 0.65rem;
 }
