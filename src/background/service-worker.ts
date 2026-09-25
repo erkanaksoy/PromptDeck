@@ -48,7 +48,7 @@ import {
 
 let stateQueue: Promise<unknown> = Promise.resolve();
 let sidePanelStateQueue: Promise<void> = Promise.resolve();
-const OPEN_SIDE_PANEL_TABS_KEY = "promptdeck-open-side-panel-tabs";
+const OPEN_SIDE_PANEL_WINDOWS_KEY = "promptdeck-open-side-panel-windows";
 const queue = <T>(work: () => Promise<T>): Promise<T> => {
   const next = stateQueue.then(work, work);
   stateQueue = next.catch(() => undefined);
@@ -58,12 +58,12 @@ const queue = <T>(work: () => Promise<T>): Promise<T> => {
 async function configureSidePanelForTab(tabId: number, url: string | undefined): Promise<void> {
   const enabled = isPromptDeckSidePanelUrl(url);
   await chrome.sidePanel.setOptions(enabled
-    ? { tabId, path: "sidepanel.html", enabled: true }
+    ? { tabId, enabled: true }
     : { tabId, enabled: false });
 }
 
 async function configureSidePanel(): Promise<void> {
-  await chrome.sidePanel.setOptions({ enabled: false });
+  await chrome.sidePanel.setOptions({ path: "sidepanel.html", enabled: false });
   await chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
   const tabs = await chrome.tabs.query({});
   await Promise.allSettled(tabs.map((tab) => tab.id === undefined
@@ -71,20 +71,20 @@ async function configureSidePanel(): Promise<void> {
     : configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl)));
 }
 
-async function openSidePanelTabs(): Promise<Set<number>> {
-  const stored = await chrome.storage.session.get(OPEN_SIDE_PANEL_TABS_KEY);
-  const value = stored[OPEN_SIDE_PANEL_TABS_KEY];
+async function openSidePanelWindows(): Promise<Set<number>> {
+  const stored = await chrome.storage.session.get(OPEN_SIDE_PANEL_WINDOWS_KEY);
+  const value = stored[OPEN_SIDE_PANEL_WINDOWS_KEY];
   return new Set(
-    Array.isArray(value) ? value.filter((tabId): tabId is number => Number.isInteger(tabId)) : []
+    Array.isArray(value) ? value.filter((windowId): windowId is number => Number.isInteger(windowId)) : []
   );
 }
 
-function setSidePanelTabOpen(tabId: number, open: boolean): Promise<void> {
+function setSidePanelWindowOpen(windowId: number, open: boolean): Promise<void> {
   const update = async (): Promise<void> => {
-    const tabIds = await openSidePanelTabs();
-    if (open) tabIds.add(tabId);
-    else tabIds.delete(tabId);
-    await chrome.storage.session.set({ [OPEN_SIDE_PANEL_TABS_KEY]: [...tabIds] });
+    const windowIds = await openSidePanelWindows();
+    if (open) windowIds.add(windowId);
+    else windowIds.delete(windowId);
+    await chrome.storage.session.set({ [OPEN_SIDE_PANEL_WINDOWS_KEY]: [...windowIds] });
   };
   const next = sidePanelStateQueue.then(update, update);
   sidePanelStateQueue = next.catch(() => undefined);
@@ -98,18 +98,18 @@ async function toggleSidePanel(): Promise<void> {
   if (tab?.id === undefined || !isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)) return;
   await configureSidePanelForTab(tab.id, tab.url ?? tab.pendingUrl);
   await sidePanelStateQueue;
-  const openTabs = await openSidePanelTabs();
-  if (openTabs.has(tab.id)) {
+  const openWindows = await openSidePanelWindows();
+  if (openWindows.has(window.id)) {
     try {
-      await chrome.sidePanel.close({ tabId: tab.id });
-      await setSidePanelTabOpen(tab.id, false);
+      await chrome.sidePanel.close({ windowId: window.id });
+      await setSidePanelWindowOpen(window.id, false);
       return;
     } catch {
-      await setSidePanelTabOpen(tab.id, false);
+      await setSidePanelWindowOpen(window.id, false);
     }
   }
-  await chrome.sidePanel.open({ tabId: tab.id });
-  await setSidePanelTabOpen(tab.id, true);
+  await chrome.sidePanel.open({ windowId: window.id });
+  await setSidePanelWindowOpen(window.id, true);
 }
 
 function dashboardState(state: StoredState): DashboardState {
@@ -449,7 +449,6 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
 });
 
 chrome.tabs.onRemoved.addListener((tabId) => {
-  void setSidePanelTabOpen(tabId, false);
   void queue(async () => {
     const state = await loadState();
     const record = findConversationByTab(state.conversations, tabId);
@@ -505,15 +504,19 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.sidePanel.onOpened.addListener((info) => {
-  if (info.tabId !== undefined) void setSidePanelTabOpen(info.tabId, true);
+  void setSidePanelWindowOpen(info.windowId, true);
 });
 
 chrome.sidePanel.onClosed.addListener((info) => {
-  if (info.tabId !== undefined) void setSidePanelTabOpen(info.tabId, false);
+  void setSidePanelWindowOpen(info.windowId, false);
 });
 
 chrome.commands.onCommand.addListener((command) => {
   if (command === "toggle-side-panel") void toggleSidePanel();
+});
+
+chrome.windows.onRemoved.addListener((windowId) => {
+  void setSidePanelWindowOpen(windowId, false);
 });
 
 chrome.runtime.onInstalled.addListener((details) => {

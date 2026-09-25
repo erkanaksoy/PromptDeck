@@ -15,7 +15,7 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 - Grid and independently scrollable Kanban views.
 - Compact left sidebar listing every open AI tab; each entry focuses its exact browser tab.
 - Sidebar rows show the provider favicon followed by a separate status icon; titles use status colors while entry outlines identify ChatGPT, Claude, or Gemini.
-- Site-scoped Chrome Side Panel available only on New Tab, ChatGPT, Claude, and Gemini, with one collapsed row per conversation, a duplicate-tab count, and a clear highlight for the currently focused tab.
+- Shared Chrome Side Panel available only on New Tab, ChatGPT, Claude, and Gemini; it stays open while switching among allowed tabs and includes one collapsed row per conversation, a duplicate-tab count, and a clear current-tab highlight.
 - Color-coded one-click status and provider buttons with icons, plus optional None, Provider, or Status grouping buttons.
 - Side Panel keyboard navigation with Up/Down arrows and Enter.
 - Side Panel position control showing the current side and linking directly to Chrome's global left/right setting.
