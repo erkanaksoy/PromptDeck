@@ -41,6 +41,9 @@ export function isExtensionRequest(value: unknown): value is ExtensionRequest {
   ) {
     return true;
   }
+  if (value.type === "FOCUS_TAB") {
+    return typeof value.tabId === "number" && Number.isInteger(value.tabId) && value.tabId >= 0;
+  }
   if (
     [
       "FOCUS_CONVERSATION",

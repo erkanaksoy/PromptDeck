@@ -10,6 +10,7 @@ export type ExtensionRequest =
   | { type: "GET_VIEW_DELAY" }
   | { type: "OPEN_DASHBOARD" }
   | { type: "RESCAN_TABS" }
+  | { type: "FOCUS_TAB"; tabId: number }
   | { type: "FOCUS_CONVERSATION"; conversationKey: string }
   | { type: "MARK_READ"; conversationKey: string }
   | { type: "MARK_UNREAD"; conversationKey: string }

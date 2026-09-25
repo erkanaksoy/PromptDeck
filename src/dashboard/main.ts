@@ -97,6 +97,36 @@ function card(record: ConversationRecord): string {
   </article>`;
 }
 
+function sidebarEntry(record: ConversationRecord, tabId: number): string {
+  const status = displayStatus(record);
+  const meta = STATUS_META[status];
+  return `<button class="tab-sidebar-entry sidebar-platform-${record.platform} sidebar-status-${status}"
+    data-action="focus-tab" data-tab-id="${tabId}"
+    title="${escapeText(record.title)} — ${escapeText(meta.name)}"
+    aria-label="Focus ${escapeText(record.title)}. Status: ${escapeText(meta.name)}">
+    <span class="tab-sidebar-status" aria-hidden="true">${meta.icon}</span>
+    <span class="tab-sidebar-name">${escapeText(record.title)}</span>
+  </button>`;
+}
+
+function renderTabSidebar(records: ConversationRecord[]): string {
+  const openTabs = sortConversations(
+    records.filter((record) => record.openTabIds.length > 0),
+    "priority"
+  ).flatMap((record) => record.openTabIds.map((tabId) => ({ record, tabId })));
+  return `<aside class="tab-sidebar" aria-label="Open AI chats">
+    <div class="tab-sidebar-header">
+      <span>Open chats</span>
+      <strong>${openTabs.length}</strong>
+    </div>
+    <nav class="tab-sidebar-list">
+      ${openTabs.length
+        ? openTabs.map(({ record, tabId }) => sidebarEntry(record, tabId)).join("")
+        : '<p class="tab-sidebar-empty">No open AI chats</p>'}
+    </nav>
+  </aside>`;
+}
+
 function statusCount(status: DisplayStatus): number {
   return state?.conversations.filter((record) => displayStatus(record) === status).length ?? 0;
 }
@@ -230,25 +260,28 @@ function render(): void {
       </nav>
     </header>
 
-    <main>
-      ${state.storageError ? `<div class="banner error-banner" role="alert">${escapeText(state.storageError)}</div>` : ""}
-      ${firstRun ? `<section class="welcome-panel">
-        <div><span class="eyebrow">Welcome to PromptDeck</span><h1>All your AI conversations, one calm view.</h1>
-        <p>PromptDeck only watches open ChatGPT, Claude, and Gemini tabs. Everything stays on this device.</p></div>
-        <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a><button class="text-button" id="hide-welcome">Hide</button></div>
-      </section>` : ""}
-      <section class="summary" aria-label="Conversation summary">
-        <div class="summary-intro"><span class="eyebrow">Attention overview</span><h1>${activeConversationCount} active conversation${activeConversationCount === 1 ? "" : "s"}</h1><p>${openTabCount} open AI tab${openTabCount === 1 ? "" : "s"} across ChatGPT, Claude, and Gemini</p></div>
-        ${(["error", "waiting", "finished_unread", "generating", "idle", "recent"] as DisplayStatus[])
-          .map((status) => `<button class="summary-stat stat-${status}" data-filter-summary="${status}">
-            <span class="stat-icon" aria-hidden="true">${STATUS_META[status].icon}</span>
-            <span><strong>${statusCount(status)}</strong><small>${escapeText(STATUS_META[status].name)}</small></span>
-          </button>`)
-          .join("")}
-      </section>
-      ${renderToolbar(records)}
-      ${noSupported ? `<section class="empty-state"><span class="empty-illustration" aria-hidden="true">▦</span><h2>No supported AI chats are open</h2><p>Open ChatGPT, Claude, or Gemini and PromptDeck will detect them automatically.</p><button class="primary" id="empty-scan">Scan open tabs</button></section>` : records.length === 0 ? `<section class="empty-state"><h2>No conversations match these filters</h2><p>Try clearing one or more filters.</p>${filtersActive ? '<button class="secondary" id="empty-clear">Reset filters</button>' : ""}</section>` : state.settings.viewMode === "grid" ? renderGrid(records) : renderKanban(records)}
-    </main>
+    <div class="dashboard-layout">
+      ${renderTabSidebar(state.conversations)}
+      <main class="dashboard-content">
+        ${state.storageError ? `<div class="banner error-banner" role="alert">${escapeText(state.storageError)}</div>` : ""}
+        ${firstRun ? `<section class="welcome-panel">
+          <div><span class="eyebrow">Welcome to PromptDeck</span><h1>All your AI conversations, one calm view.</h1>
+          <p>PromptDeck only watches open ChatGPT, Claude, and Gemini tabs. Everything stays on this device.</p></div>
+          <div class="welcome-actions"><button class="primary" id="welcome-scan">Scan open tabs</button><a href="options.html">Review privacy settings</a><button class="text-button" id="hide-welcome">Hide</button></div>
+        </section>` : ""}
+        <section class="summary" aria-label="Conversation summary">
+          <div class="summary-intro"><span class="eyebrow">Attention overview</span><h1>${activeConversationCount} active conversation${activeConversationCount === 1 ? "" : "s"}</h1><p>${openTabCount} open AI tab${openTabCount === 1 ? "" : "s"} across ChatGPT, Claude, and Gemini</p></div>
+          ${(["error", "waiting", "finished_unread", "generating", "idle", "recent"] as DisplayStatus[])
+            .map((status) => `<button class="summary-stat stat-${status}" data-filter-summary="${status}">
+              <span class="stat-icon" aria-hidden="true">${STATUS_META[status].icon}</span>
+              <span><strong>${statusCount(status)}</strong><small>${escapeText(STATUS_META[status].name)}</small></span>
+            </button>`)
+            .join("")}
+        </section>
+        ${renderToolbar(records)}
+        ${noSupported ? `<section class="empty-state"><span class="empty-illustration" aria-hidden="true">▦</span><h2>No supported AI chats are open</h2><p>Open ChatGPT, Claude, or Gemini and PromptDeck will detect them automatically.</p><button class="primary" id="empty-scan">Scan open tabs</button></section>` : records.length === 0 ? `<section class="empty-state"><h2>No conversations match these filters</h2><p>Try clearing one or more filters.</p>${filtersActive ? '<button class="secondary" id="empty-clear">Reset filters</button>' : ""}</section>` : state.settings.viewMode === "grid" ? renderGrid(records) : renderKanban(records)}
+      </main>
+    </div>
     <footer><span>Local only · No analytics · No external APIs</span><a href="diagnostics.html">Diagnostics</a></footer>
     <div class="sr-only" aria-live="polite">${escapeText(announce)}</div>
   </div>`;
@@ -275,6 +308,7 @@ root.addEventListener("click", (event) => {
   const actionName = target.closest<HTMLElement>("[data-action]")?.dataset.action;
   const actionable = target.closest<HTMLElement>("[data-action]");
   const key = actionable?.dataset.key;
+  const tabId = Number(actionable?.dataset.tabId);
   if (actionName && (key || actionName === "copy")) {
     if (actionName === "open" && key) void action({ type: "FOCUS_CONVERSATION", conversationKey: key }, "Conversation opened");
     if (actionName === "read" && key) void action({ type: "MARK_READ", conversationKey: key }, "Marked as read");
@@ -324,6 +358,10 @@ root.addEventListener("click", (event) => {
   if (target.closest("#clear-filters, #empty-clear")) {
     filters = structuredClone(EMPTY_FILTERS);
     render();
+    return;
+  }
+  if (actionName === "focus-tab" && Number.isInteger(tabId)) {
+    void action({ type: "FOCUS_TAB", tabId }, "Tab focused");
     return;
   }
   if (target.closest("#hide-welcome")) {

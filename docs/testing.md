@@ -19,6 +19,8 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Exercise every filter alone and in combination, every sort mode, Reset Filters, and result counts.
 - Exercise every card command: open, copy URL, read/unread, Waiting, Idle, clear override, reopen Recent, remove Recent.
 - Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
+- Confirm the left sidebar lists every open AI tab, including duplicate tabs for one conversation, and each entry focuses the exact selected tab.
+- Confirm sidebar outlines follow provider colors while each title and status icon follow the current conversation status.
 
 ## ChatGPT
 

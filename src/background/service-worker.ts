@@ -85,12 +85,16 @@ async function openDashboard(): Promise<void> {
   await chrome.tabs.create({ url });
 }
 
+async function focusTab(tabId: number): Promise<void> {
+  const tab = await chrome.tabs.get(tabId);
+  await chrome.windows.update(tab.windowId, { focused: true });
+  await chrome.tabs.update(tabId, { active: true });
+}
+
 async function focusConversation(record: ConversationRecord): Promise<void> {
   if (record.primaryTabId !== undefined) {
     try {
-      const tab = await chrome.tabs.get(record.primaryTabId);
-      await chrome.windows.update(tab.windowId, { focused: true });
-      await chrome.tabs.update(record.primaryTabId, { active: true });
+      await focusTab(record.primaryTabId);
       return;
     } catch {
       // Fall through to a safe reopen.
@@ -316,6 +320,15 @@ async function handleRequest(
         return { ok: true };
       case "RESCAN_TABS":
         return { ok: true, count: await rescanTabs() };
+      case "FOCUS_TAB": {
+        const state = await loadState();
+        const isTracked = Object.values(state.conversations).some((record) =>
+          record.openTabIds.includes(request.tabId)
+        );
+        if (!isTracked) throw new Error("Tab is no longer open");
+        await focusTab(request.tabId);
+        return { ok: true };
+      }
       case "FOCUS_CONVERSATION": {
         const record = (await loadState()).conversations[request.conversationKey];
         if (!record) throw new Error("Conversation not found");
