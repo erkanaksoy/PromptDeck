@@ -51,10 +51,16 @@ async function currentPanelSide(): Promise<"left" | "right" | null> {
   }
 }
 
+async function currentShortcut(): Promise<string> {
+  const commands = await chrome.commands.getAll();
+  return commands.find((command) => command.name === "toggle-side-panel")?.shortcut || "Not assigned";
+}
+
 async function render(): Promise<void> {
-  const [response, panelSide] = await Promise.all([
+  const [response, panelSide, shortcutLabel] = await Promise.all([
     send({ type: "GET_DASHBOARD_STATE" }),
-    currentPanelSide()
+    currentPanelSide(),
+    currentShortcut()
   ]);
   if (!response.ok || !response.state) {
     root.innerHTML = '<main class="sidepanel-shell"><p class="sidepanel-empty">PromptDeck is unavailable.</p></main>';
@@ -90,6 +96,9 @@ async function render(): Promise<void> {
         ? openTabs.map(({ record, tabId }) => entry(record, tabId)).join("")
         : '<div class="sidepanel-empty"><strong>No open AI chats</strong><span>Open ChatGPT, Claude, or Gemini, then rescan.</span></div>'}
     </nav>
+    <button class="sidepanel-shortcut" id="sidepanel-shortcuts" title="Customize keyboard shortcut">
+      <span>Toggle panel</span><kbd>${shortcutLabel}</kbd>
+    </button>
     <p class="sidepanel-status" aria-live="polite"></p>
   </main>`;
 }
@@ -118,6 +127,11 @@ root.addEventListener("click", (event) => {
     void chrome.tabs.create({ url: "chrome://settings/appearance" }).catch(() => {
       const status = root.querySelector<HTMLElement>(".sidepanel-status");
       if (status) status.textContent = "Open Chrome Settings → Appearance → Side panel.";
+    });
+  } else if (button.id === "sidepanel-shortcuts") {
+    void chrome.tabs.create({ url: "chrome://extensions/shortcuts" }).catch(() => {
+      const status = root.querySelector<HTMLElement>(".sidepanel-status");
+      if (status) status.textContent = "Open chrome://extensions/shortcuts to customize it.";
     });
   } else if (button.id === "sidepanel-settings") {
     void chrome.runtime.openOptionsPage();

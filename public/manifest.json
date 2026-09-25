@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "PromptDeck",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "A local-only attention dashboard for ChatGPT, Claude, and Gemini conversations.",
-  "minimum_chrome_version": "116",
+  "minimum_chrome_version": "142",
   "permissions": ["tabs", "storage", "notifications", "alarms", "scripting", "sidePanel", "favicon"],
   "host_permissions": [
     "https://chatgpt.com/*",
@@ -25,6 +25,15 @@
   },
   "side_panel": {
     "default_path": "sidepanel.html"
+  },
+  "commands": {
+    "toggle-side-panel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Show or hide the PromptDeck side panel"
+    }
   },
   "options_page": "options.html",
   "content_scripts": [

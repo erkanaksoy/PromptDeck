@@ -17,6 +17,7 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 - Sidebar rows show the provider favicon followed by a separate status icon; titles use status colors while entry outlines identify ChatGPT, Claude, or Gemini.
 - Browser-wide Chrome Side Panel for the same compact tab list while browsing any site.
 - Side Panel position control showing the current side and linking directly to Chrome's global left/right setting.
+- `Ctrl+Shift+Y` (`Command+Shift+Y` on macOS) toggles the Side Panel; the shortcut is customizable in Chrome.
 - Automatic states: Generating, Finished / Unread, Waiting for Input, Error, Idle, and Detection unavailable.
 - Status-colored conversation cards: green Finished, yellow Waiting, red Error, and slate-blue Idle.
 - Dismissible first-run welcome panel and a sticky dashboard header.

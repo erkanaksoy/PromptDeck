@@ -394,11 +394,36 @@ button:hover,
 
 .sidepanel-status {
   min-height: 24px;
-  margin: auto 10px 0;
+  margin: 0 10px;
   padding: 6px 0;
   color: var(--error);
   font-size: 0.7rem;
   text-align: center;
+}
+
+.sidepanel-shortcut {
+  width: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: auto 9px 0;
+  padding: 7px 9px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 0.68rem;
+}
+
+.sidepanel-shortcut kbd {
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .brand {
