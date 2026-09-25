@@ -62,6 +62,20 @@ export function conversationKey(platform: Platform, raw: string, id?: string | n
   return `${platform}:${id || normalized}`;
 }
 
+export function isPromptDeckSidePanelUrl(raw: string | undefined): boolean {
+  if (!raw) return false;
+  if (platformForUrl(raw)) return true;
+  try {
+    const url = new URL(raw);
+    return (
+      (url.protocol === "chrome:" && ["newtab", "new-tab-page"].includes(url.hostname)) ||
+      (url.protocol === "chrome-search:" && url.hostname === "local-ntp")
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function conversationKeyForTab(
   platform: Platform,
   raw: string,

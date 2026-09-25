@@ -21,13 +21,14 @@ Record Chrome version, PromptDeck build hash, operating system, and test date.
 - Confirm each card shows only its provider/title header, status, and Activity metadata; click the header to focus or reopen it.
 - Confirm the left sidebar lists every open AI tab, including duplicate tabs for one conversation, and each entry focuses the exact selected tab.
 - Confirm each sidebar row shows the provider favicon, then a separate status icon; outlines follow provider colors while titles and status icons follow conversation status.
-- Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on any active browser tab.
-- Keep the Side Panel open while switching between ordinary sites and supported AI tabs; confirm the active AI conversation is highlighted and updates as focus changes.
+- Click the PromptDeck toolbar icon and confirm Chrome opens the Side Panel on New Tab, ChatGPT, Claude, and Gemini.
+- Switch to an unrelated website or another `chrome://` page and confirm PromptDeck closes and is absent from the Side Panel menu; switch back to an allowed tab and confirm its prior open state returns.
+- Keep the Side Panel open while switching among supported tabs; confirm the active AI conversation is highlighted and updates as focus changes.
 - Open duplicate copies of one conversation and confirm the Side Panel collapses them into one row with the correct tab count.
 - Exercise Error, Waiting, and Generating filters alone and together; repeat with the matching ChatGPT, Claude, and Gemini provider filters, then group the visible rows by Provider and Status.
 - With focus in the Side Panel list, use Up/Down to move through visible rows and Enter to focus the selected conversation tab.
 - Open the Side Panel position control, confirm it reports the current side on Chrome 140+, and verify its button opens Chrome Settings → Appearance.
-- Press `Ctrl+Shift+Y` (`Command+Shift+Y` on macOS) repeatedly and confirm it opens and closes PromptDeck in the focused Chrome window; customize it at `chrome://extensions/shortcuts` and retest.
+- Press `Ctrl+Shift+Y` (`Command+Shift+Y` on macOS) repeatedly and confirm it opens and closes PromptDeck on the active supported tab, does nothing on unsupported tabs, and remains customizable at `chrome://extensions/shortcuts`.
 
 ## ChatGPT
 

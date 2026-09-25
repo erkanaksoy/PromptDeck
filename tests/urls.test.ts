@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   conversationKeyForTab,
   getConversationId,
+  isPromptDeckSidePanelUrl,
   isTabScopedConversationKey,
   normalizeConversationUrl,
   platformForUrl
@@ -53,5 +54,17 @@ describe("URL normalization", () => {
     expect(isTabScopedConversationKey(temporary)).toBe(true);
     expect(stable).toBe("gemini:abc");
     expect(isTabScopedConversationKey(stable)).toBe(false);
+  });
+
+  it("limits the side panel to New Tab and supported LLM sites", () => {
+    expect(isPromptDeckSidePanelUrl("chrome://newtab/")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("chrome://new-tab-page/")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("chrome-search://local-ntp/local-ntp.html")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("https://chatgpt.com/")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("https://claude.ai/new")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("https://gemini.google.com/app")).toBe(true);
+    expect(isPromptDeckSidePanelUrl("https://example.com/")).toBe(false);
+    expect(isPromptDeckSidePanelUrl("chrome://settings/")).toBe(false);
+    expect(isPromptDeckSidePanelUrl(undefined)).toBe(false);
   });
 });
