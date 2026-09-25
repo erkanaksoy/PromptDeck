@@ -15,7 +15,9 @@ Screenshots should be captured from `dashboard.html`, `popup.html`, and `options
 - Grid and independently scrollable Kanban views.
 - Compact left sidebar listing every open AI tab; each entry focuses its exact browser tab.
 - Sidebar rows show the provider favicon followed by a separate status icon; titles use status colors while entry outlines identify ChatGPT, Claude, or Gemini.
-- Browser-wide Chrome Side Panel for the same compact tab list while browsing any site.
+- Browser-wide Chrome Side Panel with one collapsed row per conversation, a duplicate-tab count, and a clear highlight for the currently focused tab.
+- One-click Error, Waiting, and Generating filters with optional Provider or Status grouping.
+- Side Panel keyboard navigation with Up/Down arrows and Enter.
 - Side Panel position control showing the current side and linking directly to Chrome's global left/right setting.
 - `Ctrl+Shift+Y` (`Command+Shift+Y` on macOS) toggles the Side Panel; the shortcut is customizable in Chrome.
 - Automatic states: Generating, Finished / Unread, Waiting for Input, Error, Idle, and Detection unavailable.
