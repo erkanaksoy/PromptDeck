@@ -80,18 +80,18 @@ function renderGroups(items: SidePanelItem[]): string {
 function filterButton(status: SidePanelQuickFilter, label: string, count: number): string {
   const active = quickFilters.has(status);
   return `<button class="sidepanel-filter sidebar-status-${status}${active ? " active" : ""}"
-    data-sidepanel-filter="${status}" aria-pressed="${active}">${label}<strong>${count}</strong></button>`;
+    data-sidepanel-filter="${status}" aria-pressed="${active}"><span class="sidepanel-filter-icon" aria-hidden="true">${STATUS_META[status].icon}</span>${label}<strong>${count}</strong></button>`;
 }
 
 function providerFilterButton(provider: Platform, count: number): string {
   const active = providerFilters.has(provider);
   return `<button class="sidepanel-filter sidepanel-provider-filter sidebar-platform-${provider}${active ? " active" : ""}"
-    data-provider-filter="${provider}" aria-pressed="${active}">${escapeText(PLATFORM_NAMES[provider])}<strong>${count}</strong></button>`;
+    data-provider-filter="${provider}" aria-pressed="${active}"><img class="sidepanel-provider-filter-icon" src="${providerFaviconUrl(provider)}" alt="" width="14" height="14" />${escapeText(PLATFORM_NAMES[provider])}<strong>${count}</strong></button>`;
 }
 
 function groupButton(mode: SidePanelGroupMode, label: string): string {
   const active = groupMode === mode;
-  return `<button class="sidepanel-filter${active ? " active" : ""}" data-group-mode="${mode}"
+  return `<button class="sidepanel-filter sidepanel-group-${mode}${active ? " active" : ""}" data-group-mode="${mode}"
     aria-pressed="${active}">${label}</button>`;
 }
 
