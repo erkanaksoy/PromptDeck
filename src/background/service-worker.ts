@@ -45,10 +45,13 @@ import {
   recordNotification,
   shouldNotify
 } from "./notification-manager";
+import { toggleSidePanelForTab } from "./side-panel-shortcut";
 
 let stateQueue: Promise<unknown> = Promise.resolve();
 let sidePanelStateQueue: Promise<void> = Promise.resolve();
 const OPEN_SIDE_PANEL_WINDOWS_KEY = "promptdeck-open-side-panel-windows";
+const openSidePanelWindowIds = new Set<number>();
+let sidePanelStateRevision = 0;
 const queue = <T>(work: () => Promise<T>): Promise<T> => {
   const next = stateQueue.then(work, work);
   stateQueue = next.catch(() => undefined);
@@ -62,8 +65,8 @@ async function configureActionForTab(tabId: number, url: string | undefined): Pr
 
 async function hideSidePanelForUnsupportedTab(tab: chrome.tabs.Tab): Promise<void> {
   if (isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)) return;
+  setSidePanelWindowOpen(tab.windowId, false);
   await chrome.sidePanel.close({ windowId: tab.windowId }).catch(() => undefined);
-  await setSidePanelWindowOpen(tab.windowId, false);
 }
 
 async function configureSidePanel(): Promise<void> {
@@ -75,45 +78,24 @@ async function configureSidePanel(): Promise<void> {
     : configureActionForTab(tab.id, tab.url ?? tab.pendingUrl)));
 }
 
-async function openSidePanelWindows(): Promise<Set<number>> {
-  const stored = await chrome.storage.session.get(OPEN_SIDE_PANEL_WINDOWS_KEY);
-  const value = stored[OPEN_SIDE_PANEL_WINDOWS_KEY];
-  return new Set(
-    Array.isArray(value) ? value.filter((windowId): windowId is number => Number.isInteger(windowId)) : []
-  );
-}
-
-function setSidePanelWindowOpen(windowId: number, open: boolean): Promise<void> {
-  const update = async (): Promise<void> => {
-    const windowIds = await openSidePanelWindows();
-    if (open) windowIds.add(windowId);
-    else windowIds.delete(windowId);
-    await chrome.storage.session.set({ [OPEN_SIDE_PANEL_WINDOWS_KEY]: [...windowIds] });
-  };
+function setSidePanelWindowOpen(windowId: number, open: boolean): void {
+  sidePanelStateRevision += 1;
+  if (open) openSidePanelWindowIds.add(windowId);
+  else openSidePanelWindowIds.delete(windowId);
+  const snapshot = [...openSidePanelWindowIds];
+  const update = (): Promise<void> => chrome.storage.session.set({ [OPEN_SIDE_PANEL_WINDOWS_KEY]: snapshot });
   const next = sidePanelStateQueue.then(update, update);
   sidePanelStateQueue = next.catch(() => undefined);
-  return next;
 }
 
-async function toggleSidePanel(): Promise<void> {
-  const window = await chrome.windows.getLastFocused({ windowTypes: ["normal"] });
-  if (window.id === undefined) return;
-  const [tab] = await chrome.tabs.query({ active: true, windowId: window.id });
-  if (tab?.id === undefined || !isPromptDeckSidePanelUrl(tab.url ?? tab.pendingUrl)) return;
-  await sidePanelStateQueue;
-  const openWindows = await openSidePanelWindows();
-  if (openWindows.has(window.id)) {
-    try {
-      await chrome.sidePanel.close({ windowId: window.id });
-      await setSidePanelWindowOpen(window.id, false);
-      return;
-    } catch {
-      await setSidePanelWindowOpen(window.id, false);
-    }
+void chrome.storage.session.get(OPEN_SIDE_PANEL_WINDOWS_KEY).then((stored) => {
+  if (sidePanelStateRevision !== 0) return;
+  const value = stored[OPEN_SIDE_PANEL_WINDOWS_KEY];
+  if (!Array.isArray(value)) return;
+  for (const windowId of value) {
+    if (Number.isInteger(windowId)) openSidePanelWindowIds.add(windowId);
   }
-  await chrome.sidePanel.open({ windowId: window.id });
-  await setSidePanelWindowOpen(window.id, true);
-}
+}).catch(() => undefined);
 
 function dashboardState(state: StoredState): DashboardState {
   return {
@@ -511,19 +493,21 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.sidePanel.onOpened.addListener((info) => {
-  void setSidePanelWindowOpen(info.windowId, true);
+  setSidePanelWindowOpen(info.windowId, true);
 });
 
 chrome.sidePanel.onClosed.addListener((info) => {
-  void setSidePanelWindowOpen(info.windowId, false);
+  setSidePanelWindowOpen(info.windowId, false);
 });
 
-chrome.commands.onCommand.addListener((command) => {
-  if (command === "toggle-side-panel") void toggleSidePanel();
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (command === "toggle-side-panel") {
+    toggleSidePanelForTab(tab, openSidePanelWindowIds, setSidePanelWindowOpen, chrome.sidePanel);
+  }
 });
 
 chrome.windows.onRemoved.addListener((windowId) => {
-  void setSidePanelWindowOpen(windowId, false);
+  setSidePanelWindowOpen(windowId, false);
 });
 
 chrome.runtime.onInstalled.addListener((details) => {
